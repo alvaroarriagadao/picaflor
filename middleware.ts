@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Rutas protegidas: requieren sesión
-  const protectedPaths = ["/practica", "/biblioteca", "/perfil"];
+  const protectedPaths = ["/practica", "/biblioteca", "/perfil", "/planificador", "/comunidad"];
   const isProtected = protectedPaths.some((p) =>
     request.nextUrl.pathname.startsWith(p)
   );

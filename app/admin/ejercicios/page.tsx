@@ -1,275 +1,95 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
-import { createExercise, type FormState } from "./actions";
-import { TECHNIQUE_LABELS, DIFFICULTY_LABELS, DIFFICULTY_ORDER } from "@/lib/types";
-import type { Technique } from "@/lib/types";
 import Link from "next/link";
-import TabEditor from "@/components/TabEditor";
+import { createClient } from "@/lib/supabase-server";
+import { TECHNIQUE_LABELS, DIFFICULTY_LABELS } from "@/lib/types";
+import type { Exercise } from "@/lib/types";
+import { DeleteExerciseButton } from "./DeleteExerciseButton";
 
-const INITIAL: FormState = { error: null, success: false };
+export const dynamic = "force-dynamic";
 
-export default function NuevoEjercicioPage() {
-  const [state, action] = useFormState(createExercise, INITIAL);
-  const formRef = useRef<HTMLFormElement>(null);
-  const tabRef = useRef<HTMLTextAreaElement>(null);
-  const [showEditor, setShowEditor] = useState(false);
+export default async function AdminEjerciciosPage() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("exercises")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-  useEffect(() => {
-    if (state.success) {
-      formRef.current?.reset();
-    }
-  }, [state.success]);
+  const exercises = (data ?? []) as Exercise[];
+
+  // Contar submissions pendientes
+  const { count: pendingCount } = await supabase
+    .from("exercise_submissions")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pending");
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-display text-3xl font-extrabold text-bone">
-          Nuevo ejercicio
-        </h1>
-        <p className="mt-1 text-stone-400">
-          Agrega un ejercicio a la biblioteca de Picaflor.
-        </p>
-      </div>
-
-      {state.success && (
-        <div className="mb-6 rounded-xl border border-sage/40 bg-sage/10 px-4 py-3 text-sage">
-          ✓ Ejercicio creado correctamente.{" "}
-          <Link href="/biblioteca" className="underline hover:text-bone">
-            Ver en biblioteca →
-          </Link>
-        </div>
-      )}
-      {state.error && (
-        <div className="mb-6 rounded-xl border border-rust/40 bg-rust/10 px-4 py-3 text-rust">
-          {state.error}
-        </div>
-      )}
-
-      <form ref={formRef} action={action} className="space-y-5">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Título" name="title" placeholder="Ej: Alternate picking diagonal" required />
-          <Field
-            label="Slug (URL)"
-            name="slug"
-            placeholder="Ej: alt-picking-diagonal"
-            required
-          />
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
-              Técnica
-            </label>
-            <select
-              name="technique"
-              required
-              className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-bone outline-none focus:border-ember"
-            >
-              <option value="">Selecciona…</option>
-              {(Object.keys(TECHNIQUE_LABELS) as Technique[]).map((k) => (
-                <option key={k} value={k}>
-                  {TECHNIQUE_LABELS[k]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
-              Dificultad
-            </label>
-            <select
-              name="difficulty"
-              required
-              className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-bone outline-none focus:border-ember"
-            >
-              <option value="">Selecciona…</option>
-              {DIFFICULTY_ORDER.map((d) => (
-                <option key={d} value={d}>
-                  {DIFFICULTY_LABELS[d]}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="BPM inicio" name="bpm_start" type="number" placeholder="60" required />
-          <Field label="BPM meta" name="bpm_target" type="number" placeholder="140" required />
-        </div>
-
+      <div className="mb-8 flex items-start justify-between">
         <div>
-          <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
-            Descripción
-          </label>
-          <textarea
-            name="description"
-            required
-            rows={3}
-            placeholder="Explica el ejercicio: qué trabaja, cómo ejecutarlo..."
-            className="w-full resize-none rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-bone outline-none transition placeholder:text-stone-600 focus:border-ember"
-          />
-        </div>
-
-        <Field
-          label="En qué fijarte (focus)"
-          name="focus"
-          placeholder="Una línea: el aspecto clave a observar"
-          required
-        />
-
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <label className="text-xs uppercase tracking-wider text-stone-500">
-              Tablatura ASCII
-            </label>
-            <button
-              type="button"
-              onClick={() => setShowEditor((v) => !v)}
-              className="text-xs text-ember underline hover:text-amber transition"
-            >
-              {showEditor ? "Ocultar editor visual" : "Abrir editor visual ◆"}
-            </button>
-          </div>
-
-          {showEditor && (
-            <div className="mb-3">
-              <TabEditor
-                onInsert={(tab) => {
-                  if (tabRef.current) {
-                    tabRef.current.value = tab;
-                    tabRef.current.dispatchEvent(
-                      new Event("input", { bubbles: true })
-                    );
-                  }
-                  setShowEditor(false);
-                }}
-              />
-            </div>
-          )}
-
-          <textarea
-            ref={tabRef}
-            name="tab"
-            required
-            rows={8}
-            placeholder={`e|--1--2--3--4--|
-B|--1--2--3--4--|
-G|--1--2--3--4--|
-D|--1--2--3--4--|
-A|--1--2--3--4--|
-E|--1--2--3--4--|
-    ↓  ↑  ↓  ↑`}
-            className="w-full resize-y rounded-lg border border-smoke bg-ink/60 px-4 py-3 font-mono text-sm text-bone outline-none transition placeholder:text-stone-600 focus:border-ember"
-          />
-          <p className="mt-1 text-xs text-stone-600">
-            Formato: e|, B|, G|, D|, A|, E| · Puedes usar el editor visual para generar la tablatura
+          <h1 className="font-display text-3xl font-extrabold text-bone">
+            Ejercicios
+          </h1>
+          <p className="mt-1 text-stone-400">
+            {exercises.length} ejercicios en la biblioteca
           </p>
         </div>
-
-        {/* Archivo Guitar Pro (opcional) */}
-        <GpFileField />
-
-        <div className="flex gap-3 pt-2">
-          <SubmitButton />
+        <div className="flex items-center gap-3">
+          {(pendingCount ?? 0) > 0 && (
+            <Link
+              href="/admin/revisiones"
+              className="flex items-center gap-2 rounded-xl border border-amber/40 bg-amber/10 px-4 py-2 text-sm font-medium text-amber transition hover:bg-amber/20"
+            >
+              <span className="h-2 w-2 animate-pulse rounded-full bg-amber" />
+              {pendingCount} por revisar
+            </Link>
+          )}
           <Link
-            href="/biblioteca"
-            className="rounded-xl border border-smoke px-6 py-3 font-medium text-stone-400 transition hover:text-bone"
+            href="/admin/ejercicios/nuevo"
+            className="rounded-xl bg-ember px-5 py-2 font-display font-bold uppercase tracking-wider text-ink text-sm transition hover:bg-amber"
           >
-            Ver biblioteca
+            + Nuevo ejercicio
           </Link>
         </div>
-      </form>
-    </div>
-  );
-}
+      </div>
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-xl bg-ember px-6 py-3 font-display font-bold uppercase tracking-wider text-ink transition hover:bg-amber disabled:opacity-50"
-    >
-      {pending ? "Guardando…" : "Crear ejercicio"}
-    </button>
-  );
-}
+      <div className="space-y-2">
+        {exercises.map((ex) => (
+          <div
+            key={ex.id}
+            className="flex items-center gap-4 rounded-xl border border-smoke bg-ash/40 px-5 py-4 transition hover:border-smoke/80"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs rounded-md bg-smoke px-2 py-0.5 text-stone-400">
+                  {TECHNIQUE_LABELS[ex.technique]}
+                </span>
+                <span className="text-xs rounded-md bg-smoke px-2 py-0.5 text-stone-400">
+                  {DIFFICULTY_LABELS[ex.difficulty]}
+                </span>
+              </div>
+              <h3 className="mt-1 font-display font-bold text-bone truncate">
+                {ex.title}
+              </h3>
+              <p className="text-xs text-stone-600 font-mono mt-0.5">/{ex.slug}</p>
+            </div>
 
-function GpFileField() {
-  const [fileName, setFileName] = useState<string | null>(null);
-
-  return (
-    <div>
-      <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
-        Archivo Guitar Pro{" "}
-        <span className="normal-case text-stone-600">
-          (opcional · .gp .gp5 .gpx .gp3 .gp4 .gp7)
-        </span>
-      </label>
-      <label
-        className={`flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-4 py-4 transition
-          ${fileName
-            ? "border-ember/50 bg-ember/5"
-            : "border-smoke bg-ink/40 hover:border-ember/40 hover:bg-ash/60"
-          }`}
-      >
-        <span className="text-xl text-ember">♩</span>
-        <div className="min-w-0 flex-1">
-          {fileName ? (
-            <span className="truncate text-sm font-medium text-amber">{fileName}</span>
-          ) : (
-            <span className="text-sm text-stone-400">
-              Arrastra o haz clic para adjuntar tablatura Guitar Pro
-            </span>
-          )}
-        </div>
-        {fileName && (
-          <span className="shrink-0 text-xs text-sage">✓ listo</span>
-        )}
-        <input
-          type="file"
-          name="tab_file"
-          accept=".gp,.gp3,.gp4,.gp5,.gpx,.gp7"
-          className="sr-only"
-          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
-        />
-      </label>
-      <p className="mt-1 text-xs text-stone-600">
-        Si adjuntas un archivo GP, aparecerá un visor interactivo en la página del ejercicio.
-      </p>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  name,
-  placeholder,
-  type = "text",
-  required,
-}: {
-  label: string;
-  name: string;
-  placeholder?: string;
-  type?: string;
-  required?: boolean;
-}) {
-  return (
-    <div>
-      <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
-        {label}
-      </label>
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        required={required}
-        className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-bone outline-none transition placeholder:text-stone-600 focus:border-ember"
-      />
+            <div className="shrink-0 flex items-center gap-2">
+              <Link
+                href={`/biblioteca/${ex.slug}`}
+                className="rounded-lg border border-smoke px-3 py-1.5 text-xs text-stone-400 transition hover:text-bone"
+              >
+                Ver
+              </Link>
+              <Link
+                href={`/admin/ejercicios/editar/${ex.id}`}
+                className="rounded-lg border border-smoke px-3 py-1.5 text-xs text-stone-400 transition hover:border-ember/40 hover:text-ember"
+              >
+                Editar
+              </Link>
+              <DeleteExerciseButton exerciseId={ex.id} title={ex.title} />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

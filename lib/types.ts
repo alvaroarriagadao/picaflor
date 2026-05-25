@@ -27,6 +27,60 @@ export interface Exercise {
   created_at: string;
 }
 
+export type TaskCategory = "tecnica" | "improvisacion" | "cancion" | "teoria" | "general";
+export type SubmissionStatus = "pending" | "approved" | "rejected";
+
+export const TASK_CATEGORY_META: Record<TaskCategory, { label: string; icon: string; tw: string }> = {
+  tecnica:       { label: "Técnica",        icon: "⚡", tw: "ember"  },
+  improvisacion: { label: "Improvisación",  icon: "♫", tw: "amber"  },
+  cancion:       { label: "Canción",        icon: "♩", tw: "sage"   },
+  teoria:        { label: "Teoría",         icon: "◎", tw: "blue"   },
+  general:       { label: "General",        icon: "◆", tw: "stone"  },
+};
+
+export const TASK_CATEGORIES = Object.keys(TASK_CATEGORY_META) as TaskCategory[];
+
+export interface PracticeTask {
+  id: string;
+  user_id: string;
+  title: string;
+  category: TaskCategory;
+  duration_minutes: number;
+  color: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface DailyTaskCompletion {
+  id: string;
+  user_id: string;
+  task_id: string;
+  completed_on: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface ExerciseSubmission {
+  id: string;
+  user_id: string;
+  title: string;
+  technique: Technique;
+  difficulty: Difficulty;
+  bpm_start: number;
+  bpm_target: number;
+  description: string;
+  focus: string;
+  tab: string;
+  tab_file_url: string | null;
+  status: SubmissionStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+  submitter_notes: string | null;
+  created_at: string;
+}
+
 export interface UserFavorite {
   id: string;
   user_id: string;
