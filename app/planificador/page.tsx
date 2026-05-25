@@ -14,7 +14,7 @@ export default async function PlanificadorPage() {
 
   const today = getTodayStr();
 
-  // Obtener tareas activas
+  // Tareas activas ordenadas
   const { data: tasksData } = await supabase
     .from("practice_tasks")
     .select("*")
@@ -24,47 +24,53 @@ export default async function PlanificadorPage() {
 
   const tasks = (tasksData ?? []) as PracticeTask[];
 
-  // Obtener completados de los últimos 7 días
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-  const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+  // Calcular Lunes de la semana actual
+  const todayDate  = new Date(today + "T12:00:00");
+  const dow        = todayDate.getDay(); // 0=Dom 1=Lun...
+  const toMonday   = dow === 0 ? 6 : dow - 1;
+  const monday     = new Date(todayDate);
+  monday.setDate(todayDate.getDate() - toMonday);
+  const mondayStr  = monday.toISOString().slice(0, 10);
 
+  // Domingo de la semana
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const sundayStr = sunday.toISOString().slice(0, 10);
+
+  // Completados de toda la semana (Lun–Dom)
   const { data: completionsData } = await supabase
     .from("daily_task_completions")
     .select("*")
     .eq("user_id", user.id)
-    .gte("completed_on", sevenDaysAgoStr);
+    .gte("completed_on", mondayStr)
+    .lte("completed_on", sundayStr);
 
   const completions = (completionsData ?? []) as DailyTaskCompletion[];
 
-  // Construir datos de la semana (últimos 7 días incl. hoy)
+  // Construir array Mon→Sun
   const weekData = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const dateStr = d.toISOString().slice(0, 10);
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const dateStr      = d.toISOString().slice(0, 10);
     const completedIds = completions
       .filter(c => c.completed_on === dateStr)
       .map(c => c.task_id);
 
     return {
       dateStr,
-      label: DAY_LABELS[d.getDay()],
-      dayNum: d.getDate(),
+      label:   DAY_LABELS[d.getDay()],
+      dayNum:  d.getDate(),
       isToday: dateStr === today,
+      isFuture: dateStr > today,
       completedIds,
     };
   });
-
-  const todayCompletedIds = completions
-    .filter(c => c.completed_on === today)
-    .map(c => c.task_id);
 
   return (
     <PlannerClient
       tasks={tasks}
       weekData={weekData}
       todayStr={today}
-      todayCompletedIds={todayCompletedIds}
     />
   );
 }
