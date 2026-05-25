@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import dynamicImport from "next/dynamic";
 import { createClient } from "@/lib/supabase-server";
 import Metronome from "@/components/Metronome";
 import TabDisplay from "@/components/TabDisplay";
@@ -8,6 +9,12 @@ import ExerciseLogButton from "@/components/ExerciseLogButton";
 import FavoriteButton from "@/components/FavoriteButton";
 import type { Exercise } from "@/lib/types";
 import { todayStr } from "@/lib/daily";
+
+// Cargado sólo en cliente — AlphaTab usa APIs de navegador
+const GuitarProViewer = dynamicImport(
+  () => import("@/components/GuitarProViewer"),
+  { ssr: false }
+);
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +102,18 @@ export default async function ExerciseDetail({
             </p>
             <TabDisplay tab={ex.tab} />
           </div>
+
+          {ex.tab_file_url && (
+            <div>
+              <p className="mb-2 text-xs uppercase tracking-wider text-stone-500">
+                Visor Guitar Pro
+              </p>
+              <GuitarProViewer
+                fileUrl={ex.tab_file_url}
+                fileName={`${ex.title}.gp`}
+              />
+            </div>
+          )}
 
           <ExerciseLogButton
             exerciseId={ex.id}

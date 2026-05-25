@@ -23,6 +23,7 @@ export interface Exercise {
   description: string;
   focus: string;
   tab: string;
+  tab_file_url: string | null;
   created_at: string;
 }
 

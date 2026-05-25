@@ -1,6 +1,8 @@
 import type { Exercise } from "../lib/types";
 
-type SeedExercise = Omit<Exercise, "id" | "created_at">;
+type SeedExercise = Omit<Exercise, "id" | "created_at" | "tab_file_url"> & {
+  tab_file_url?: string | null;
+};
 
 export const SEED_EXERCISES: SeedExercise[] = [
   {

@@ -169,6 +169,9 @@ E|--1--2--3--4--|
           </p>
         </div>
 
+        {/* Archivo Guitar Pro (opcional) */}
+        <GpFileField />
+
         <div className="flex gap-3 pt-2">
           <SubmitButton />
           <Link
@@ -193,6 +196,52 @@ function SubmitButton() {
     >
       {pending ? "Guardando…" : "Crear ejercicio"}
     </button>
+  );
+}
+
+function GpFileField() {
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
+        Archivo Guitar Pro{" "}
+        <span className="normal-case text-stone-600">
+          (opcional · .gp .gp5 .gpx .gp3 .gp4 .gp7)
+        </span>
+      </label>
+      <label
+        className={`flex cursor-pointer items-center gap-3 rounded-lg border border-dashed px-4 py-4 transition
+          ${fileName
+            ? "border-ember/50 bg-ember/5"
+            : "border-smoke bg-ink/40 hover:border-ember/40 hover:bg-ash/60"
+          }`}
+      >
+        <span className="text-xl text-ember">♩</span>
+        <div className="min-w-0 flex-1">
+          {fileName ? (
+            <span className="truncate text-sm font-medium text-amber">{fileName}</span>
+          ) : (
+            <span className="text-sm text-stone-400">
+              Arrastra o haz clic para adjuntar tablatura Guitar Pro
+            </span>
+          )}
+        </div>
+        {fileName && (
+          <span className="shrink-0 text-xs text-sage">✓ listo</span>
+        )}
+        <input
+          type="file"
+          name="tab_file"
+          accept=".gp,.gp3,.gp4,.gp5,.gpx,.gp7"
+          className="sr-only"
+          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
+        />
+      </label>
+      <p className="mt-1 text-xs text-stone-600">
+        Si adjuntas un archivo GP, aparecerá un visor interactivo en la página del ejercicio.
+      </p>
+    </div>
   );
 }
 
