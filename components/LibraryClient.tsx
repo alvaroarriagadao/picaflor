@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { DifficultyBadge, TechniqueBadge } from "@/components/Badges";
+import FavoriteButton from "@/components/FavoriteButton";
 import {
   DIFFICULTY_LABELS,
   DIFFICULTY_ORDER,
@@ -13,12 +14,20 @@ import type { Difficulty, Exercise, Technique } from "@/lib/types";
 interface Props {
   exercises: Exercise[];
   practicedIds: string[];
+  favoriteIds: string[];
 }
 
-export default function LibraryClient({ exercises, practicedIds }: Props) {
+export default function LibraryClient({
+  exercises,
+  practicedIds,
+  favoriteIds,
+}: Props) {
   const [tech, setTech] = useState<Technique | "all">("all");
   const [diff, setDiff] = useState<Difficulty | "all">("all");
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+
   const practiced = useMemo(() => new Set(practicedIds), [practicedIds]);
+  const favorites = useMemo(() => new Set(favoriteIds), [favoriteIds]);
 
   const techniques = useMemo(() => {
     const present = new Set(exercises.map((e) => e.technique));
@@ -32,20 +41,38 @@ export default function LibraryClient({ exercises, practicedIds }: Props) {
       exercises.filter(
         (e) =>
           (tech === "all" || e.technique === tech) &&
-          (diff === "all" || e.difficulty === diff)
+          (diff === "all" || e.difficulty === diff) &&
+          (!onlyFavorites || favorites.has(e.id))
       ),
-    [exercises, tech, diff]
+    [exercises, tech, diff, onlyFavorites, favorites]
   );
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-display text-4xl font-extrabold tracking-tight text-bone">
-          Biblioteca
-        </h1>
-        <p className="mt-1 text-stone-400">
-          {exercises.length} ejercicios · filtra por técnica y dificultad
-        </p>
+      <div className="mb-8 flex items-end justify-between">
+        <div>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-bone">
+            Biblioteca
+          </h1>
+          <p className="mt-1 text-stone-400">
+            {exercises.length} ejercicios · filtra por técnica y dificultad
+          </p>
+        </div>
+        <button
+          onClick={() => setOnlyFavorites((f) => !f)}
+          className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition ${
+            onlyFavorites
+              ? "border-amber/40 bg-amber/10 text-amber"
+              : "border-smoke bg-ash/40 text-stone-400 hover:border-amber/30 hover:text-amber"
+          }`}
+        >
+          {onlyFavorites ? "★" : "☆"} Favoritos
+          {favorites.size > 0 && (
+            <span className="rounded-full bg-amber/20 px-1.5 py-0.5 text-xs text-amber">
+              {favorites.size}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Filtros de técnica */}
@@ -54,11 +81,7 @@ export default function LibraryClient({ exercises, practicedIds }: Props) {
           Todas
         </FilterChip>
         {techniques.map((t) => (
-          <FilterChip
-            key={t}
-            active={tech === t}
-            onClick={() => setTech(t)}
-          >
+          <FilterChip key={t} active={tech === t} onClick={() => setTech(t)}>
             {TECHNIQUE_LABELS[t]}
           </FilterChip>
         ))}
@@ -79,7 +102,9 @@ export default function LibraryClient({ exercises, practicedIds }: Props) {
       {/* Grid de ejercicios */}
       {filtered.length === 0 ? (
         <p className="py-12 text-center text-stone-500">
-          No hay ejercicios con esos filtros.
+          {onlyFavorites
+            ? "Aún no tienes favoritos. Toca ★ en cualquier ejercicio."
+            : "No hay ejercicios con esos filtros."}
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -89,14 +114,21 @@ export default function LibraryClient({ exercises, practicedIds }: Props) {
               href={`/biblioteca/${e.slug}`}
               className="group relative overflow-hidden rounded-2xl border border-smoke bg-ash/40 p-5 transition hover:border-ember/50 hover:bg-ash/70"
             >
-              {practiced.has(e.id) && (
-                <span className="absolute right-4 top-4 text-sage">✓</span>
-              )}
+              <div className="absolute right-3 top-3 flex items-center gap-1">
+                {practiced.has(e.id) && (
+                  <span className="text-sage text-sm">✓</span>
+                )}
+                <FavoriteButton
+                  exerciseId={e.id}
+                  initialFavorited={favorites.has(e.id)}
+                  size="sm"
+                />
+              </div>
               <div className="mb-3 flex flex-wrap gap-2">
                 <TechniqueBadge technique={e.technique} />
                 <DifficultyBadge difficulty={e.difficulty} />
               </div>
-              <h3 className="font-display text-xl font-bold text-bone transition group-hover:text-ember">
+              <h3 className="font-display text-xl font-bold text-bone transition group-hover:text-ember pr-10">
                 {e.title}
               </h3>
               <p className="mt-2 line-clamp-2 text-sm text-stone-400">

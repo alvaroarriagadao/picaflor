@@ -26,6 +26,13 @@ export interface Exercise {
   created_at: string;
 }
 
+export interface UserFavorite {
+  id: string;
+  user_id: string;
+  exercise_id: string;
+  created_at: string;
+}
+
 export interface PracticeLog {
   id: string;
   user_id: string;

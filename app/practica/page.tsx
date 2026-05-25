@@ -48,17 +48,25 @@ export default async function PracticePage() {
 
   let completedToday = false;
   let streak = 0;
+  let favoriteIds: string[] = [];
 
   if (user) {
-    const { data: logs } = await supabase
-      .from("practice_logs")
-      .select("practiced_on")
-      .eq("user_id", user.id)
-      .order("practiced_on", { ascending: false });
+    const [{ data: logs }, { data: favs }] = await Promise.all([
+      supabase
+        .from("practice_logs")
+        .select("practiced_on")
+        .eq("user_id", user.id)
+        .order("practiced_on", { ascending: false }),
+      supabase
+        .from("user_favorites")
+        .select("exercise_id")
+        .eq("user_id", user.id),
+    ]);
 
     const dates = (logs ?? []).map((l) => l.practiced_on as string);
     completedToday = dates.includes(todayStr());
     streak = computeStreak(dates);
+    favoriteIds = (favs ?? []).map((f) => f.exercise_id as string);
   }
 
   if (!daily) {
@@ -78,6 +86,7 @@ export default async function PracticePage() {
       allExercises={all}
       completedToday={completedToday}
       streak={streak}
+      favoriteIds={favoriteIds}
     />
   );
 }

@@ -5,6 +5,7 @@ import Metronome from "@/components/Metronome";
 import TabDisplay from "@/components/TabDisplay";
 import { DifficultyBadge, TechniqueBadge } from "@/components/Badges";
 import ExerciseLogButton from "@/components/ExerciseLogButton";
+import FavoriteButton from "@/components/FavoriteButton";
 import type { Exercise } from "@/lib/types";
 import { todayStr } from "@/lib/daily";
 
@@ -32,25 +33,39 @@ export default async function ExerciseDetail({
   } = await supabase.auth.getUser();
 
   let completedToday = false;
+  let isFavorited = false;
+
   if (user) {
-    const { data: log } = await supabase
-      .from("practice_logs")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("exercise_id", ex.id)
-      .eq("practiced_on", todayStr())
-      .maybeSingle();
+    const [{ data: log }, { data: fav }] = await Promise.all([
+      supabase
+        .from("practice_logs")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("exercise_id", ex.id)
+        .eq("practiced_on", todayStr())
+        .maybeSingle(),
+      supabase
+        .from("user_favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("exercise_id", ex.id)
+        .maybeSingle(),
+    ]);
     completedToday = !!log;
+    isFavorited = !!fav;
   }
 
   return (
     <div>
-      <Link
-        href="/biblioteca"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-stone-500 transition hover:text-ember"
-      >
-        ← Biblioteca
-      </Link>
+      <div className="mb-6 flex items-center justify-between">
+        <Link
+          href="/biblioteca"
+          className="inline-flex items-center gap-1 text-sm text-stone-500 transition hover:text-ember"
+        >
+          ← Biblioteca
+        </Link>
+        <FavoriteButton exerciseId={ex.id} initialFavorited={isFavorited} />
+      </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
         <TechniqueBadge technique={ex.technique} />

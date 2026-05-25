@@ -4,13 +4,17 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-client";
 
-const LINKS = [
+const BASE_LINKS = [
   { href: "/practica", label: "Práctica" },
   { href: "/biblioteca", label: "Biblioteca" },
   { href: "/perfil", label: "Perfil" },
 ];
 
-export default function Nav() {
+interface Props {
+  isAdmin?: boolean;
+}
+
+export default function Nav({ isAdmin = false }: Props) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -20,6 +24,10 @@ export default function Nav() {
     router.push("/login");
     router.refresh();
   };
+
+  const links = isAdmin
+    ? [...BASE_LINKS, { href: "/admin/ejercicios", label: "+ Ejercicio" }]
+    : BASE_LINKS;
 
   return (
     <header className="sticky top-0 z-40 border-b border-smoke/60 bg-ink/80 backdrop-blur-md">
@@ -32,14 +40,17 @@ export default function Nav() {
         </Link>
 
         <nav className="flex items-center gap-1">
-          {LINKS.map((l) => {
+          {links.map((l) => {
             const active = pathname.startsWith(l.href);
+            const isAdminLink = l.href.startsWith("/admin");
             return (
               <Link
                 key={l.href}
                 href={l.href}
                 className={`rounded-lg px-3 py-1.5 text-sm transition ${
-                  active
+                  isAdminLink
+                    ? "border border-ember/40 text-ember hover:bg-ember/10"
+                    : active
                     ? "bg-smoke text-bone"
                     : "text-stone-400 hover:text-bone"
                 }`}

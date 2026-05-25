@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import Metronome from "@/components/Metronome";
 import TabDisplay from "@/components/TabDisplay";
 import { DifficultyBadge, TechniqueBadge } from "@/components/Badges";
+import FavoriteButton from "@/components/FavoriteButton";
 import { pickRandomExercise } from "@/lib/daily";
 import { createClient } from "@/lib/supabase-client";
 import type { Exercise } from "@/lib/types";
@@ -13,6 +14,7 @@ interface Props {
   allExercises: Exercise[];
   completedToday: boolean;
   streak: number;
+  favoriteIds: string[];
 }
 
 export default function PracticeClient({
@@ -20,8 +22,10 @@ export default function PracticeClient({
   allExercises,
   completedToday,
   streak,
+  favoriteIds,
 }: Props) {
   const [current, setCurrent] = useState<Exercise>(dailyExercise);
+  const favSet = new Set(favoriteIds);
   const [isDaily, setIsDaily] = useState(true);
   const [done, setDone] = useState(completedToday);
   const [localStreak, setLocalStreak] = useState(streak);
@@ -70,9 +74,16 @@ export default function PracticeClient({
           <p className="font-display text-sm uppercase tracking-[0.25em] text-ember">
             {isDaily ? "Ejercicio del día" : "Lick al azar"}
           </p>
-          <h1 className="mt-1 font-display text-4xl font-extrabold tracking-tight text-bone sm:text-5xl">
-            {current.title}
-          </h1>
+          <div className="mt-1 flex items-start gap-2">
+            <h1 className="font-display text-4xl font-extrabold tracking-tight text-bone sm:text-5xl">
+              {current.title}
+            </h1>
+            <FavoriteButton
+              key={current.id}
+              exerciseId={current.id}
+              initialFavorited={favSet.has(current.id)}
+            />
+          </div>
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-amber/30 bg-amber/5 px-4 py-2.5">
           <span className="text-2xl">🔥</span>

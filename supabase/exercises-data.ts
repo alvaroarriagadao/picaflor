@@ -268,6 +268,188 @@ D|------7--5----7--5----7--5--------|
 E|----------------------------------|
    ↓  ↑ ↓  ↑`,
   },
+  // ── Ejercicios nuevos (inspirados en técnica de guitarra clásica) ──
+  {
+    slug: "calentamiento-cuerdas-abiertas",
+    title: "Calentamiento — 6 cuerdas abiertas",
+    technique: "alternate_picking",
+    difficulty: "principiante",
+    bpm_start: 60,
+    bpm_target: 140,
+    description:
+      "El primer ejercicio antes de cualquier sesión. Cuatro golpes alternos en cada cuerda de aguda a grave. La mano derecha establece el ritmo antes de que la izquierda entre en juego.",
+    focus: "Mantener el movimiento de péndulo constante en cada cambio de cuerda.",
+    tab: `e|--0--0--0--0-----------------------------|
+B|--0--0--0--0-----------------------------|
+G|--0--0--0--0-----------------------------|
+D|--0--0--0--0-----------------------------|
+A|--0--0--0--0-----------------------------|
+E|--0--0--0--0-----------------------------|
+   ↓  ↑  ↓  ↑`,
+  },
+  {
+    slug: "cruce-3-cuerdas-descendente",
+    title: "Cross picking — barrido descendente 3 cuerdas",
+    technique: "alternate_picking",
+    difficulty: "principiante",
+    bpm_start: 60,
+    bpm_target: 130,
+    description:
+      "Patrón de tres cuerdas adyacentes (G-D-A) con cuerdas abiertas en cruce continuo. Cada grupo de tres notas cruza de agudo a grave repitiendo el ciclo. Trabaja el outside picking.",
+    focus: "Controlar el outside picking al cruzar de G hacia D.",
+    tab: `e|------------------------------------------|
+B|------------------------------------------|
+G|--0-----------0-----------0---------------|
+D|----0-------0---0-------0---0-------------|
+A|------0---0-----------0-----------0-------|
+E|------------------------------------------|
+   ↓  ↓  ↑  ↓  ↓  ↑  ↓  ↓  ↑`,
+  },
+  {
+    slug: "cruce-3-cuerdas-ascendente",
+    title: "Cross picking — barrido ascendente 3 cuerdas",
+    technique: "alternate_picking",
+    difficulty: "principiante",
+    bpm_start: 60,
+    bpm_target: 130,
+    description:
+      "Igual que el ejercicio anterior pero desde las cuerdas graves hacia las agudas (A-D-G). Trabaja el inside picking que ocurre al cruzar de A hacia D.",
+    focus: "Inside picking limpio en el cruce de A a D.",
+    tab: `e|------------------------------------------|
+B|------------------------------------------|
+G|------0---0-----------0-----------0-------|
+D|----0---0---0-------0---0-------0---0-----|
+A|--0-----------0---0-----------0-----------|
+E|------------------------------------------|
+   ↓  ↑  ↓  ↓  ↑  ↓  ↓  ↑  ↓`,
+  },
+  {
+    slug: "hammer-on-basico-1234",
+    title: "Hammer-on básico — 1-2-3-4 por cuerda",
+    technique: "legato",
+    difficulty: "principiante",
+    bpm_start: 50,
+    bpm_target: 100,
+    description:
+      "Solo se ataca con púa la primera nota de cada cuerda. Los tres dedos siguientes golpean el traste sin picar. El volumen de cada hammer-on debe igualar el de la nota picada.",
+    focus: "Fuerza y volumen uniforme en cada hammer-on, especialmente el dedo 4.",
+    tab: `e|--1h2h3h4--------------------------------|
+B|--1h2h3h4--------------------------------|
+G|--1h2h3h4--------------------------------|
+D|--1h2h3h4--------------------------------|
+A|--1h2h3h4--------------------------------|
+E|--1h2h3h4--------------------------------|
+   p  h  h  h`,
+  },
+  {
+    slug: "pull-off-basico-4321",
+    title: "Pull-off básico — 4-3-2-1 por cuerda",
+    technique: "legato",
+    difficulty: "principiante",
+    bpm_start: 50,
+    bpm_target: 100,
+    description:
+      "El reverso del ejercicio de hammer-on. Coloca los cuatro dedos en el traste al mismo tiempo y ve soltando de mayor a menor. El pull-off requiere un pequeño tirón lateral de la cuerda.",
+    focus: "Tirón lateral controlado para que cada pull-off suene con volumen pleno.",
+    tab: `e|--4p3p2p1--------------------------------|
+B|--4p3p2p1--------------------------------|
+G|--4p3p2p1--------------------------------|
+D|--4p3p2p1--------------------------------|
+A|--4p3p2p1--------------------------------|
+E|--4p3p2p1--------------------------------|
+   p  p  p`,
+  },
+  {
+    slug: "trill-1-3-seis-cuerdas",
+    title: "Trill dedos 1-3 en las seis cuerdas",
+    technique: "legato",
+    difficulty: "intermedio",
+    bpm_start: 60,
+    bpm_target: 160,
+    description:
+      "Trino sostenido entre los dedos 1 y 3 en cada cuerda durante varios compases. El dedo 1 queda plantado; todo el movimiento viene del dedo 3 desde el nudillo.",
+    focus: "Mantener el dedo 1 fijo y mover solo el dedo 3 desde el nudillo, sin tensión.",
+    tab: `e|--5h7p5h7p5h7p5--------------------------|
+B|--5h7p5h7p5h7p5--------------------------|
+G|--5h7p5h7p5h7p5--------------------------|
+D|--5h7p5h7p5h7p5--------------------------|
+A|--5h7p5h7p5h7p5--------------------------|
+E|--5h7p5h7p5h7p5--------------------------|
+   h  p  h  p  h  p  h`,
+  },
+  {
+    slug: "legato-hhpp-123",
+    title: "Legato HHPP — patrón 1-2-3 por cuerda",
+    technique: "legato",
+    difficulty: "intermedio",
+    bpm_start: 60,
+    bpm_target: 140,
+    description:
+      "Patrón de cuatro notas: dos hammer-ons subiendo y dos pull-offs bajando, recorriendo todas las cuerdas. La cuarta nota (segundo pull-off) tiende a debilitarse — ahí va la atención.",
+    focus: "Volumen parejo en las cuatro notas, especialmente el pull-off final.",
+    tab: `e|--1h2h3p2p1h2h3p2p1----------------------|
+B|--1h2h3p2p1h2h3p2p1----------------------|
+G|--1h2h3p2p1h2h3p2p1----------------------|
+D|--1h2h3p2p1h2h3p2p1----------------------|
+A|--1h2h3p2p1h2h3p2p1----------------------|
+E|--1h2h3p2p1h2h3p2p1----------------------|
+   h  h  p  p  h  h  p  p`,
+  },
+  {
+    slug: "independencia-patron-134",
+    title: "Independencia — patrón 1-3-4",
+    technique: "finger_independence",
+    difficulty: "intermedio",
+    bpm_start: 50,
+    bpm_target: 100,
+    description:
+      "Secuencia que omite el dedo 2 para fortalecer el vínculo entre el anular y el meñique, la combinación más débil para la mayoría de guitarristas. Mantén los dedos inactivos cerca del traste.",
+    focus: "Levantar solo el dedo activo; los demás permanecen a ras del traste.",
+    tab: `e|--1--3--4--3--1--3--4--3----------------|
+B|--1--3--4--3--1--3--4--3----------------|
+G|--1--3--4--3--1--3--4--3----------------|
+D|--1--3--4--3--1--3--4--3----------------|
+A|--1--3--4--3--1--3--4--3----------------|
+E|--1--3--4--3--1--3--4--3----------------|
+   ↓  ↑  ↓  ↑  ↓  ↑  ↓  ↑`,
+  },
+  {
+    slug: "arpegio-picking-em-abierto",
+    title: "Arpeggio picking — Em abierto cuerda a cuerda",
+    technique: "alternate_picking",
+    difficulty: "principiante",
+    bpm_start: 50,
+    bpm_target: 120,
+    description:
+      "Ataca cada cuerda del acorde de Mi menor de manera individual, de grave a agudo y de regreso. Ideal para desarrollar precisión de la púa en un contexto armónico real.",
+    focus: "Ataque limpio en cada cuerda sin rozar las adyacentes.",
+    tab: `e|-------------------------------0---------|
+B|---------------------------0-------------|
+G|-----------------------0-----------------|
+D|-------------------2---------------------|
+A|-------------2---------------------------|
+E|--0--------------------------------------|
+   ↓  ↑  ↓  ↑  ↓  ↑`,
+  },
+  {
+    slug: "sweep-5c-am-completo",
+    title: "Sweep — arpegio Am 5 cuerdas",
+    technique: "sweep_picking",
+    difficulty: "experto",
+    bpm_start: 40,
+    bpm_target: 120,
+    description:
+      "Barrido descendente y ascendente sobre el arpegio de La menor en 5 cuerdas. La mano izquierda ejecuta un rolling preciso para que cada nota suene separada y no ligada.",
+    focus: "Rolling de dedos sincronizado con el barrido — una nota a la vez, sin legato involuntario.",
+    tab: `e|--5--------------------------------------|
+B|----5------------------------------------|
+G|------5----------------------------------|
+D|--------7--------------------------------|
+A|----------7------------------------------|
+E|-----------------------------------------|
+   ↑   ↑   ↑   ↓   ↓  (de agudo a grave, sweep con ↓)`,
+  },
+
   {
     slug: "legato-pulloff-descendente",
     title: "Legato — cascada de pull-offs",
