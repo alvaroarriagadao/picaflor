@@ -24,6 +24,8 @@ export interface Exercise {
   focus: string;
   tab: string;
   tab_file_url: string | null;
+  image_url: string | null;
+  submitted_by_email: string | null;
   created_at: string;
 }
 
@@ -65,14 +67,16 @@ export interface ExerciseSubmission {
   id: string;
   user_id: string;
   title: string;
-  technique: Technique;
-  difficulty: Difficulty;
-  bpm_start: number;
-  bpm_target: number;
-  description: string;
-  focus: string;
-  tab: string;
+  technique: Technique | null;
+  difficulty: Difficulty | null;
+  bpm_start: number | null;
+  bpm_target: number | null;
+  description: string | null;
+  focus: string | null;
+  tab: string | null;
   tab_file_url: string | null;
+  image_url: string | null;
+  submitter_email: string | null;
   status: SubmissionStatus;
   reviewed_by: string | null;
   reviewed_at: string | null;

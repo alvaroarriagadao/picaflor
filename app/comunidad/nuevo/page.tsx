@@ -14,14 +14,44 @@ export default function ComunidadNuevoPage() {
   const [state, action] = useFormState(submitExercise, INITIAL);
   const formRef = useRef<HTMLFormElement>(null);
   const tabRef  = useRef<HTMLTextAreaElement>(null);
-  const [showEditor, setShowEditor] = useState(false);
+  const [showEditor, setShowEditor]       = useState(false);
+  const [showDetails, setShowDetails]     = useState(false);
+  const [imagePreview, setImagePreview]   = useState<string | null>(null);
+  const [imageName, setImageName]         = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging]           = useState(false);
 
   useEffect(() => {
-    if (state.success) formRef.current?.reset();
+    if (state.success) {
+      formRef.current?.reset();
+      setImagePreview(null);
+      setImageName(null);
+    }
   }, [state.success]);
+
+  const handleFile = (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 8 * 1024 * 1024) return;
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+    setImageName(file.name);
+    // asignar al input
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    if (fileInputRef.current) fileInputRef.current.files = dt.files;
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  };
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
+      {/* Header */}
       <div className="mb-8">
         <div className="mb-4 flex items-center gap-2 text-stone-500 text-sm">
           <span className="text-amber">◆</span>
@@ -29,84 +59,111 @@ export default function ComunidadNuevoPage() {
         </div>
         <h1 className="font-display text-3xl font-extrabold text-bone">Comparte un ejercicio</h1>
         <p className="mt-2 text-stone-400 leading-relaxed">
-          Envía un ejercicio de técnica a la comunidad. El equipo lo revisará y,
-          si cumple los estándares, quedará visible para todos los guitarristas.
+          Sube un screenshot o escribe la tablatura. El admin lo revisará antes de publicarlo.
         </p>
       </div>
 
+      {/* Success */}
       {state.success && (
-        <div className="mb-6 rounded-xl border border-sage/40 bg-sage/10 px-5 py-4">
-          <p className="font-bold text-sage">¡Ejercicio enviado!</p>
+        <div className="mb-6 rounded-2xl border border-sage/40 bg-sage/10 px-5 py-5">
+          <p className="font-display font-bold text-sage text-lg">¡Ejercicio enviado!</p>
           <p className="mt-1 text-sm text-stone-400">
             Lo revisaremos pronto. Gracias por contribuir a la comunidad.
           </p>
-          <Link href="/biblioteca" className="mt-3 inline-block text-sm text-ember hover:underline">
+          <Link href="/biblioteca" className="mt-3 inline-block text-sm text-ember hover:underline transition">
             Ver biblioteca →
           </Link>
         </div>
       )}
-
       {state.error && (
         <div className="mb-6 rounded-xl border border-rust/40 bg-rust/10 px-4 py-3 text-rust text-sm">
           {state.error}
         </div>
       )}
 
-      <div className="mb-6 rounded-xl border border-smoke bg-ash/40 p-4 text-sm text-stone-400">
-        <p className="font-medium text-stone-300 mb-1">¿Qué buscamos?</p>
-        <ul className="space-y-1 list-disc list-inside text-stone-500">
-          <li>Ejercicios técnicos originales y bien descritos</li>
-          <li>Tablatura correctamente formateada</li>
-          <li>BPM realistas y progresivos</li>
-          <li>Descripción clara que ayude al guitarrista a entender el objetivo</li>
-        </ul>
-      </div>
+      <form ref={formRef} action={action} className="space-y-6" encType="multipart/form-data">
 
-      <form ref={formRef} action={action} className="space-y-5">
-        <Field label="Título del ejercicio" name="title" placeholder="Ej: Legato en tríadas ascendentes" required />
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">Técnica</label>
-            <select name="technique" required
-              className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-bone outline-none focus:border-ember">
-              <option value="">Selecciona…</option>
-              {(Object.keys(TECHNIQUE_LABELS) as Technique[]).map((k) => (
-                <option key={k} value={k}>{TECHNIQUE_LABELS[k]}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">Dificultad</label>
-            <select name="difficulty" required
-              className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-bone outline-none focus:border-ember">
-              <option value="">Selecciona…</option>
-              {DIFFICULTY_ORDER.map((d) => (
-                <option key={d} value={d}>{DIFFICULTY_LABELS[d]}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="BPM inicio" name="bpm_start" type="number" placeholder="60" required />
-          <Field label="BPM meta" name="bpm_target" type="number" placeholder="140" required />
-        </div>
-
+        {/* Título */}
         <div>
-          <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">Descripción</label>
-          <textarea name="description" required rows={3} placeholder="Explica el ejercicio: qué trabaja, cómo ejecutarlo…"
-            className="w-full resize-none rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-bone outline-none transition placeholder:text-stone-600 focus:border-ember" />
+          <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
+            Título <span className="text-ember">*</span>
+          </label>
+          <input type="text" name="title" required
+            placeholder="Ej: Legato en tríadas ascendentes"
+            className="w-full rounded-xl border border-smoke bg-ink/60 px-4 py-3 text-bone outline-none transition placeholder:text-stone-600 focus:border-ember" />
         </div>
 
-        <Field label="En qué fijarte (focus)" name="focus" placeholder="El aspecto clave a observar" required />
+        {/* Imagen */}
+        <div>
+          <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
+            Imagen del ejercicio{" "}
+            <span className="normal-case text-stone-600">(screenshot · jpg, png, webp · max 8MB)</span>
+          </label>
 
+          {imagePreview ? (
+            /* Preview */
+            <div className="relative overflow-hidden rounded-2xl border border-ember/40 bg-ash/40">
+              <img src={imagePreview} alt="Preview" className="w-full object-contain max-h-72" />
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-ink/80 px-4 py-2 backdrop-blur-sm">
+                <span className="text-xs text-stone-400 truncate">{imageName}</span>
+                <button type="button"
+                  onClick={() => { setImagePreview(null); setImageName(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                  className="text-xs text-stone-400 hover:text-rust transition shrink-0 ml-3">
+                  × Cambiar imagen
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Drop zone */
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 transition ${
+                dragging
+                  ? "border-ember bg-ember/5"
+                  : "border-smoke bg-ash/30 hover:border-ember/50 hover:bg-ash/50"
+              }`}>
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-smoke text-3xl">
+                📷
+              </div>
+              <div className="text-center">
+                <p className="font-medium text-stone-300">
+                  {dragging ? "Suelta la imagen aquí" : "Arrastra tu screenshot aquí"}
+                </p>
+                <p className="text-sm text-stone-500 mt-1">o haz clic para seleccionar</p>
+              </div>
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            name="exercise_image"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="sr-only"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+          />
+        </div>
+
+        {/* Separador o/y */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-smoke/60" />
+          <span className="text-xs text-stone-600 uppercase tracking-wider">o también</span>
+          <div className="flex-1 h-px bg-smoke/60" />
+        </div>
+
+        {/* Tablatura ASCII (opcional) */}
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="text-xs uppercase tracking-wider text-stone-500">Tablatura ASCII</label>
+            <label className="text-xs uppercase tracking-wider text-stone-500">
+              Tablatura ASCII{" "}
+              <span className="normal-case text-stone-600">(opcional)</span>
+            </label>
             <button type="button" onClick={() => setShowEditor((v) => !v)}
-              className="text-xs text-ember underline hover:text-amber transition">
-              {showEditor ? "Ocultar editor" : "Abrir editor visual ◆"}
+              className="text-xs text-ember hover:text-amber underline transition">
+              {showEditor ? "Ocultar editor" : "Editor visual ◆"}
             </button>
           </div>
           {showEditor && (
@@ -120,26 +177,95 @@ export default function ComunidadNuevoPage() {
               }} />
             </div>
           )}
-          <textarea ref={tabRef} name="tab" required rows={8}
+          <textarea ref={tabRef} name="tab" rows={6}
             placeholder={`e|--0--2--3--5--|
 B|--0--2--3--5--|
 G|--0--2--3--5--|
 D|--------------|
 A|--------------|
 E|--------------|`}
-            className="w-full resize-y rounded-lg border border-smoke bg-ink/60 px-4 py-3 font-mono text-sm text-bone outline-none transition placeholder:text-stone-600 focus:border-ember" />
+            className="w-full resize-y rounded-xl border border-smoke bg-ink/60 px-4 py-3 font-mono text-sm text-bone outline-none transition placeholder:text-stone-600 focus:border-ember" />
         </div>
 
+        {/* Descripción */}
         <div>
           <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
-            Notas para el revisor{" "}
+            Descripción{" "}
+            <span className="normal-case text-stone-600">(opcional)</span>
+          </label>
+          <textarea name="description" rows={2}
+            placeholder="Qué trabaja este ejercicio, cómo ejecutarlo…"
+            className="w-full resize-none rounded-xl border border-smoke bg-ink/60 px-4 py-3 text-sm text-bone outline-none transition placeholder:text-stone-600 focus:border-ember" />
+        </div>
+
+        {/* Detalles adicionales (colapsable) */}
+        <div>
+          <button type="button" onClick={() => setShowDetails(v => !v)}
+            className="flex items-center gap-2 text-sm text-stone-400 hover:text-bone transition">
+            <span className={`transition-transform duration-200 ${showDetails ? "rotate-90" : ""}`}>▶</span>
+            Detalles adicionales
+            <span className="text-xs text-stone-600">(técnica, dificultad, BPM, focus)</span>
+          </button>
+
+          {showDetails && (
+            <div className="mt-4 space-y-4 rounded-2xl border border-smoke bg-ash/30 p-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">Técnica</label>
+                  <select name="technique"
+                    className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-sm text-bone outline-none focus:border-ember">
+                    <option value="">Sin especificar</option>
+                    {(Object.keys(TECHNIQUE_LABELS) as Technique[]).map((k) => (
+                      <option key={k} value={k}>{TECHNIQUE_LABELS[k]}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">Dificultad</label>
+                  <select name="difficulty"
+                    className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-sm text-bone outline-none focus:border-ember">
+                    <option value="">Sin especificar</option>
+                    {DIFFICULTY_ORDER.map((d) => (
+                      <option key={d} value={d}>{DIFFICULTY_LABELS[d]}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">BPM inicio</label>
+                  <input type="number" name="bpm_start" placeholder="60"
+                    className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-sm text-bone outline-none focus:border-ember placeholder:text-stone-600" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">BPM meta</label>
+                  <input type="number" name="bpm_target" placeholder="140"
+                    className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-sm text-bone outline-none focus:border-ember placeholder:text-stone-600" />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">Focus</label>
+                <input type="text" name="focus" placeholder="El aspecto clave a observar"
+                  className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-sm text-bone outline-none focus:border-ember placeholder:text-stone-600" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Notas al revisor */}
+        <div>
+          <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
+            Nota para el revisor{" "}
             <span className="normal-case text-stone-600">(opcional)</span>
           </label>
           <textarea name="submitter_notes" rows={2}
-            placeholder="Contexto adicional, inspiración, o cualquier detalle que quieras compartir…"
-            className="w-full resize-none rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-sm text-bone outline-none transition placeholder:text-stone-600 focus:border-ember" />
+            placeholder="Contexto, inspiración, fuente del ejercicio…"
+            className="w-full resize-none rounded-xl border border-smoke bg-ink/60 px-4 py-3 text-sm text-bone outline-none transition placeholder:text-stone-600 focus:border-ember" />
         </div>
 
+        {/* Actions */}
         <div className="flex gap-3 pt-2">
           <SubmitButton />
           <Link href="/biblioteca"
@@ -159,17 +285,5 @@ function SubmitButton() {
       className="rounded-xl bg-ember px-6 py-3 font-display font-bold uppercase tracking-wider text-ink transition hover:bg-amber disabled:opacity-50">
       {pending ? "Enviando…" : "Enviar ejercicio"}
     </button>
-  );
-}
-
-function Field({ label, name, placeholder, type = "text", required }: {
-  label: string; name: string; placeholder?: string; type?: string; required?: boolean;
-}) {
-  return (
-    <div>
-      <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">{label}</label>
-      <input type={type} name={name} placeholder={placeholder} required={required}
-        className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-bone outline-none transition placeholder:text-stone-600 focus:border-ember" />
-    </div>
   );
 }

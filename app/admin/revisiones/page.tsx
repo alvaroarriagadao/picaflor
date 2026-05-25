@@ -55,7 +55,7 @@ export default async function RevisionesPage() {
                 className="flex items-center justify-between rounded-xl border border-smoke bg-ash/30 px-4 py-3">
                 <div>
                   <span className="font-medium text-stone-300">{sub.title}</span>
-                  <span className="ml-2 text-xs text-stone-600">{TECHNIQUE_LABELS[sub.technique]}</span>
+                  {sub.technique && <span className="ml-2 text-xs text-stone-600">{TECHNIQUE_LABELS[sub.technique as keyof typeof TECHNIQUE_LABELS] ?? sub.technique}</span>}
                 </div>
                 <span className={`text-xs font-medium rounded-full px-2.5 py-0.5 ${
                   sub.status === "approved"
@@ -84,17 +84,29 @@ function SubmissionCard({ sub }: { sub: ExerciseSubmission }) {
   return (
     <div className="rounded-2xl border border-amber/30 bg-amber/5 p-5">
       <div className="mb-3 flex items-start justify-between gap-4">
-        <div>
+        <div className="flex-1 min-w-0">
+          {/* Autor */}
+          {sub.submitter_email && (
+            <p className="text-xs text-stone-600 mb-1.5">
+              👤 {sub.submitter_email}
+            </p>
+          )}
           <div className="flex flex-wrap gap-2 mb-1.5">
-            <span className="text-xs rounded-md bg-smoke px-2 py-0.5 text-stone-400">
-              {TECHNIQUE_LABELS[sub.technique]}
-            </span>
-            <span className="text-xs rounded-md bg-smoke px-2 py-0.5 text-stone-400">
-              {DIFFICULTY_LABELS[sub.difficulty]}
-            </span>
-            <span className="text-xs text-stone-600">
-              ♩ {sub.bpm_start}→{sub.bpm_target} BPM
-            </span>
+            {sub.technique && (
+              <span className="text-xs rounded-md bg-smoke px-2 py-0.5 text-stone-400">
+                {TECHNIQUE_LABELS[sub.technique as keyof typeof TECHNIQUE_LABELS] ?? sub.technique}
+              </span>
+            )}
+            {sub.difficulty && (
+              <span className="text-xs rounded-md bg-smoke px-2 py-0.5 text-stone-400">
+                {DIFFICULTY_LABELS[sub.difficulty as keyof typeof DIFFICULTY_LABELS] ?? sub.difficulty}
+              </span>
+            )}
+            {(sub.bpm_start || sub.bpm_target) && (
+              <span className="text-xs text-stone-600">
+                ♩ {sub.bpm_start ?? "?"}→{sub.bpm_target ?? "?"} BPM
+              </span>
+            )}
           </div>
           <h3 className="font-display text-xl font-bold text-bone">{sub.title}</h3>
           {sub.submitter_notes && (
@@ -106,16 +118,33 @@ function SubmissionCard({ sub }: { sub: ExerciseSubmission }) {
         </span>
       </div>
 
-      <p className="mb-3 text-sm text-stone-300 leading-relaxed">{sub.description}</p>
+      {sub.description && (
+        <p className="mb-3 text-sm text-stone-300 leading-relaxed">{sub.description}</p>
+      )}
 
-      <div className="mb-4 rounded-lg border border-smoke bg-ink/60 p-3 overflow-x-auto">
-        <pre className="tab-block text-xs text-amber">{sub.tab}</pre>
-      </div>
+      {/* Imagen */}
+      {sub.image_url && (
+        <div className="mb-4 overflow-hidden rounded-xl border border-smoke bg-ink/40">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={sub.image_url} alt={sub.title}
+            className="w-full object-contain max-h-80" />
+        </div>
+      )}
 
-      <div className="rounded-xl border border-smoke/60 bg-ash/40 p-3 mb-4">
-        <p className="text-xs uppercase tracking-wider text-stone-500 mb-1">Focus</p>
-        <p className="text-sm text-stone-300">{sub.focus}</p>
-      </div>
+      {/* Tab */}
+      {sub.tab && (
+        <div className="mb-4 rounded-lg border border-smoke bg-ink/60 p-3 overflow-x-auto">
+          <pre className="tab-block text-xs text-amber">{sub.tab}</pre>
+        </div>
+      )}
+
+      {/* Focus */}
+      {sub.focus && (
+        <div className="rounded-xl border border-smoke/60 bg-ash/40 p-3 mb-4">
+          <p className="text-xs uppercase tracking-wider text-stone-500 mb-1">Focus</p>
+          <p className="text-sm text-stone-300">{sub.focus}</p>
+        </div>
+      )}
 
       <ReviewActions submissionId={sub.id} title={sub.title} />
     </div>

@@ -18,14 +18,16 @@ export async function approveSubmission(id: string): Promise<{ error: string | n
   const { error: insertErr } = await supabase.from("exercises").insert({
     title:       sub.title,
     slug:        sub.slug ?? sub.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60),
-    technique:   sub.technique,
-    difficulty:  sub.difficulty,
-    bpm_start:   sub.bpm_start,
-    bpm_target:  sub.bpm_target,
-    description: sub.description,
-    focus:       sub.focus,
-    tab:         sub.tab,
-    tab_file_url: sub.tab_file_url,
+    technique:   sub.technique   || "alternate_picking",
+    difficulty:  sub.difficulty  || "principiante",
+    bpm_start:   sub.bpm_start   || 60,
+    bpm_target:  sub.bpm_target  || 120,
+    description: sub.description || sub.title,
+    focus:       sub.focus       || "Trabaja la técnica con precisión.",
+    tab:         sub.tab         || "",
+    tab_file_url:    sub.tab_file_url,
+    image_url:       sub.image_url,
+    submitted_by_email: sub.submitter_email,
   });
 
   if (insertErr) {

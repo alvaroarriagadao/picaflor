@@ -83,35 +83,73 @@ export default async function ExerciseDetail({
         {ex.title}
       </h1>
 
+      {/* Atribución comunidad */}
+      {ex.submitted_by_email && (
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-smoke bg-ash/40 px-4 py-2.5">
+          <span className="text-sm">👤</span>
+          <p className="text-xs text-stone-400">
+            Aportado por la comunidad ·{" "}
+            <span className="text-stone-300">{ex.submitted_by_email}</span>
+          </p>
+        </div>
+      )}
+
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-5">
-          <p className="text-lg leading-relaxed text-stone-300">
-            {ex.description}
-          </p>
+          {ex.description && (
+            <p className="text-lg leading-relaxed text-stone-300">{ex.description}</p>
+          )}
 
-          <div className="rounded-xl border border-smoke/60 bg-ash/40 p-4">
-            <p className="text-xs uppercase tracking-wider text-stone-500">
-              En qué fijarte
-            </p>
-            <p className="mt-1 text-stone-300">{ex.focus}</p>
-          </div>
+          {ex.focus && (
+            <div className="rounded-xl border border-smoke/60 bg-ash/40 p-4">
+              <p className="text-xs uppercase tracking-wider text-stone-500">En qué fijarte</p>
+              <p className="mt-1 text-stone-300">{ex.focus}</p>
+            </div>
+          )}
 
-          <div>
-            <p className="mb-2 text-xs uppercase tracking-wider text-stone-500">
-              Tablatura
-            </p>
-            <TabDisplay tab={ex.tab} />
-          </div>
+          {/* Imagen (screenshot) — va primero si existe */}
+          {ex.image_url && (
+            <div>
+              <p className="mb-2 text-xs uppercase tracking-wider text-stone-500">Tablatura</p>
+              <div className="overflow-hidden rounded-2xl border border-smoke bg-ink/40">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={ex.image_url}
+                  alt={`Tablatura de ${ex.title}`}
+                  className="w-full object-contain"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ASCII tab — si hay imagen lo mostramos colapsado, si no como siempre */}
+          {ex.tab && (
+            <div>
+              {!ex.image_url && (
+                <p className="mb-2 text-xs uppercase tracking-wider text-stone-500">Tablatura</p>
+              )}
+              {ex.image_url ? (
+                <details className="group">
+                  <summary className="cursor-pointer text-xs text-stone-500 hover:text-stone-300 transition list-none flex items-center gap-1">
+                    <span className="group-open:rotate-90 transition-transform">▶</span>
+                    Ver tablatura ASCII
+                  </summary>
+                  <div className="mt-2">
+                    <TabDisplay tab={ex.tab} />
+                  </div>
+                </details>
+              ) : (
+                <TabDisplay tab={ex.tab} />
+              )}
+            </div>
+          )}
 
           {ex.tab_file_url && (
             <div>
               <p className="mb-2 text-xs uppercase tracking-wider text-stone-500">
                 Visor Guitar Pro
               </p>
-              <GuitarProViewer
-                fileUrl={ex.tab_file_url}
-                fileName={`${ex.title}.gp`}
-              />
+              <GuitarProViewer fileUrl={ex.tab_file_url} fileName={`${ex.title}.gp`} />
             </div>
           )}
 

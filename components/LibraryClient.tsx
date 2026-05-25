@@ -131,30 +131,50 @@ export default function LibraryClient({
             <Link
               key={e.id}
               href={`/biblioteca/${e.slug}`}
-              className="group relative overflow-hidden rounded-2xl border border-smoke bg-ash/40 p-5 transition hover:border-ember/50 hover:bg-ash/70"
+              className="group relative overflow-hidden rounded-2xl border border-smoke bg-ash/40 transition hover:border-ember/50 hover:bg-ash/70"
             >
-              <div className="absolute right-3 top-3 flex items-center gap-1">
-                {practiced.has(e.id) && (
-                  <span className="text-sage text-sm">✓</span>
+              {/* Imagen de tablatura (screenshot) */}
+              {e.image_url && (
+                <div className="relative h-36 overflow-hidden border-b border-smoke bg-ink/40">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={e.image_url}
+                    alt={e.title}
+                    className="h-full w-full object-cover object-top opacity-80 group-hover:opacity-100 transition-opacity"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-ink/60" />
+                </div>
+              )}
+
+              <div className="p-5">
+                <div className="absolute right-3 top-3 flex items-center gap-1">
+                  {practiced.has(e.id) && (
+                    <span className="text-sage text-sm">✓</span>
+                  )}
+                  <FavoriteButton
+                    exerciseId={e.id}
+                    initialFavorited={favorites.has(e.id)}
+                    size="sm"
+                  />
+                </div>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <TechniqueBadge technique={e.technique} />
+                  <DifficultyBadge difficulty={e.difficulty} />
+                  {e.submitted_by_email && (
+                    <span className="rounded-full border border-smoke px-2 py-0.5 text-[10px] text-stone-500">
+                      comunidad
+                    </span>
+                  )}
+                </div>
+                <h3 className="pr-10 font-display text-xl font-bold text-bone transition group-hover:text-ember">
+                  {e.title}
+                </h3>
+                {e.description && (
+                  <p className="mt-2 line-clamp-2 text-sm text-stone-400">{e.description}</p>
                 )}
-                <FavoriteButton
-                  exerciseId={e.id}
-                  initialFavorited={favorites.has(e.id)}
-                  size="sm"
-                />
-              </div>
-              <div className="mb-3 flex flex-wrap gap-2">
-                <TechniqueBadge technique={e.technique} />
-                <DifficultyBadge difficulty={e.difficulty} />
-              </div>
-              <h3 className="pr-10 font-display text-xl font-bold text-bone transition group-hover:text-ember">
-                {e.title}
-              </h3>
-              <p className="mt-2 line-clamp-2 text-sm text-stone-400">
-                {e.description}
-              </p>
-              <div className="mt-4 font-mono text-xs text-stone-500">
-                ♩ {e.bpm_start}→{e.bpm_target} BPM
+                <div className="mt-4 font-mono text-xs text-stone-500">
+                  ♩ {e.bpm_start}→{e.bpm_target} BPM
+                </div>
               </div>
             </Link>
           ))}
