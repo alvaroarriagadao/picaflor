@@ -49,54 +49,73 @@ export default function LibraryClient({
 
   return (
     <div>
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <h1 className="font-display text-4xl font-extrabold tracking-tight text-bone">
-            Biblioteca
-          </h1>
-          <p className="mt-1 text-stone-400">
-            {exercises.length} ejercicios · filtra por técnica y dificultad
-          </p>
-        </div>
+      {/* Cabecera */}
+      <div className="mb-6">
+        <h1 className="font-display text-4xl font-extrabold tracking-tight text-bone">
+          Biblioteca
+        </h1>
+        <p className="mt-1 text-stone-400">
+          {filtered.length} de {exercises.length} ejercicios
+        </p>
+      </div>
+
+      {/* Filtros compactos */}
+      <div className="mb-8 flex flex-wrap items-center gap-3">
+        <select
+          value={tech}
+          onChange={(e) => setTech(e.target.value as Technique | "all")}
+          className="rounded-lg border border-smoke bg-ash/60 px-3 py-2 text-sm text-bone outline-none transition focus:border-ember"
+        >
+          <option value="all">Todas las técnicas</option>
+          {techniques.map((t) => (
+            <option key={t} value={t}>
+              {TECHNIQUE_LABELS[t]}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={diff}
+          onChange={(e) => setDiff(e.target.value as Difficulty | "all")}
+          className="rounded-lg border border-smoke bg-ash/60 px-3 py-2 text-sm text-bone outline-none transition focus:border-ember"
+        >
+          <option value="all">Cualquier nivel</option>
+          {DIFFICULTY_ORDER.map((d) => (
+            <option key={d} value={d}>
+              {DIFFICULTY_LABELS[d]}
+            </option>
+          ))}
+        </select>
+
         <button
           onClick={() => setOnlyFavorites((f) => !f)}
-          className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition ${
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition ${
             onlyFavorites
               ? "border-amber/40 bg-amber/10 text-amber"
-              : "border-smoke bg-ash/40 text-stone-400 hover:border-amber/30 hover:text-amber"
+              : "border-smoke bg-ash/60 text-stone-400 hover:text-amber"
           }`}
         >
-          {onlyFavorites ? "★" : "☆"} Favoritos
+          {onlyFavorites ? "★" : "☆"}
+          <span>Favoritos</span>
           {favorites.size > 0 && (
-            <span className="rounded-full bg-amber/20 px-1.5 py-0.5 text-xs text-amber">
+            <span className="rounded-full bg-amber/20 px-1.5 text-xs text-amber">
               {favorites.size}
             </span>
           )}
         </button>
-      </div>
 
-      {/* Filtros de técnica */}
-      <div className="mb-3 flex flex-wrap gap-2">
-        <FilterChip active={tech === "all"} onClick={() => setTech("all")}>
-          Todas
-        </FilterChip>
-        {techniques.map((t) => (
-          <FilterChip key={t} active={tech === t} onClick={() => setTech(t)}>
-            {TECHNIQUE_LABELS[t]}
-          </FilterChip>
-        ))}
-      </div>
-
-      {/* Filtros de dificultad */}
-      <div className="mb-8 flex flex-wrap gap-2">
-        <FilterChip active={diff === "all"} onClick={() => setDiff("all")}>
-          Cualquier nivel
-        </FilterChip>
-        {DIFFICULTY_ORDER.map((d) => (
-          <FilterChip key={d} active={diff === d} onClick={() => setDiff(d)}>
-            {DIFFICULTY_LABELS[d]}
-          </FilterChip>
-        ))}
+        {(tech !== "all" || diff !== "all" || onlyFavorites) && (
+          <button
+            onClick={() => {
+              setTech("all");
+              setDiff("all");
+              setOnlyFavorites(false);
+            }}
+            className="text-xs text-stone-600 hover:text-stone-400 transition"
+          >
+            Limpiar filtros ×
+          </button>
+        )}
       </div>
 
       {/* Grid de ejercicios */}
@@ -128,42 +147,19 @@ export default function LibraryClient({
                 <TechniqueBadge technique={e.technique} />
                 <DifficultyBadge difficulty={e.difficulty} />
               </div>
-              <h3 className="font-display text-xl font-bold text-bone transition group-hover:text-ember pr-10">
+              <h3 className="pr-10 font-display text-xl font-bold text-bone transition group-hover:text-ember">
                 {e.title}
               </h3>
               <p className="mt-2 line-clamp-2 text-sm text-stone-400">
                 {e.description}
               </p>
-              <div className="mt-4 flex items-center gap-3 font-mono text-xs text-stone-500">
-                <span>♩ {e.bpm_start}→{e.bpm_target} BPM</span>
+              <div className="mt-4 font-mono text-xs text-stone-500">
+                ♩ {e.bpm_start}→{e.bpm_target} BPM
               </div>
             </Link>
           ))}
         </div>
       )}
     </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-full border px-4 py-1.5 text-sm transition ${
-        active
-          ? "border-ember bg-ember text-ink"
-          : "border-smoke bg-ash/40 text-stone-400 hover:border-stone-600 hover:text-bone"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

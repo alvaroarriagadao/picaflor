@@ -1,7 +1,7 @@
 import Nav from "@/components/Nav";
 import { createClient } from "@/lib/supabase-server";
 
-const ADMIN_EMAIL = "alvaroarriagada101@gmail.com";
+const ADMIN_EMAIL = "alvaro.arriagada101@gmail.com";
 
 export default async function AppLayout({
   children,

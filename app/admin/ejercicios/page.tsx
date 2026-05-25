@@ -1,17 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createExercise, type FormState } from "./actions";
 import { TECHNIQUE_LABELS, DIFFICULTY_LABELS, DIFFICULTY_ORDER } from "@/lib/types";
 import type { Technique } from "@/lib/types";
 import Link from "next/link";
+import TabEditor from "@/components/TabEditor";
 
 const INITIAL: FormState = { error: null, success: false };
 
 export default function NuevoEjercicioPage() {
   const [state, action] = useFormState(createExercise, INITIAL);
   const formRef = useRef<HTMLFormElement>(null);
+  const tabRef = useRef<HTMLTextAreaElement>(null);
+  const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
     if (state.success) {
@@ -118,10 +121,37 @@ export default function NuevoEjercicioPage() {
         />
 
         <div>
-          <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">
-            Tablatura ASCII
-          </label>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-xs uppercase tracking-wider text-stone-500">
+              Tablatura ASCII
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowEditor((v) => !v)}
+              className="text-xs text-ember underline hover:text-amber transition"
+            >
+              {showEditor ? "Ocultar editor visual" : "Abrir editor visual ◆"}
+            </button>
+          </div>
+
+          {showEditor && (
+            <div className="mb-3">
+              <TabEditor
+                onInsert={(tab) => {
+                  if (tabRef.current) {
+                    tabRef.current.value = tab;
+                    tabRef.current.dispatchEvent(
+                      new Event("input", { bubbles: true })
+                    );
+                  }
+                  setShowEditor(false);
+                }}
+              />
+            </div>
+          )}
+
           <textarea
+            ref={tabRef}
             name="tab"
             required
             rows={8}
@@ -131,11 +161,11 @@ G|--1--2--3--4--|
 D|--1--2--3--4--|
 A|--1--2--3--4--|
 E|--1--2--3--4--|
-   ↓  ↑  ↓  ↑`}
-            className="w-full resize-none rounded-lg border border-smoke bg-ink/60 px-4 py-3 font-mono text-sm text-bone outline-none transition placeholder:text-stone-600 focus:border-ember"
+    ↓  ↑  ↓  ↑`}
+            className="w-full resize-y rounded-lg border border-smoke bg-ink/60 px-4 py-3 font-mono text-sm text-bone outline-none transition placeholder:text-stone-600 focus:border-ember"
           />
           <p className="mt-1 text-xs text-stone-600">
-            Usa el formato estándar con prefijos e|, B|, G|, D|, A|, E|
+            Formato: e|, B|, G|, D|, A|, E| · Puedes usar el editor visual para generar la tablatura
           </p>
         </div>
 
