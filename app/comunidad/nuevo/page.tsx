@@ -20,12 +20,18 @@ export default function ComunidadNuevoPage() {
   const [imageName, setImageName]         = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging]           = useState(false);
+  // "Otro" technique state
+  const [techSelect, setTechSelect]       = useState("");
+  const [customTech, setCustomTech]       = useState("");
+  const finalTech = techSelect === "__otro__" ? customTech.trim() : techSelect;
 
   useEffect(() => {
     if (state.success) {
       formRef.current?.reset();
       setImagePreview(null);
       setImageName(null);
+      setTechSelect("");
+      setCustomTech("");
     }
   }, [state.success]);
 
@@ -82,6 +88,8 @@ export default function ComunidadNuevoPage() {
       )}
 
       <form ref={formRef} action={action} className="space-y-6" encType="multipart/form-data">
+        {/* Hidden technique field managed by state */}
+        <input type="hidden" name="technique" value={finalTech} />
 
         {/* Título */}
         <div>
@@ -212,13 +220,19 @@ E|--------------|`}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">Técnica</label>
-                  <select name="technique"
+                  <select value={techSelect} onChange={e => setTechSelect(e.target.value)}
                     className="w-full rounded-lg border border-smoke bg-ink/60 px-4 py-3 text-sm text-bone outline-none focus:border-ember">
                     <option value="">Sin especificar</option>
                     {(Object.keys(TECHNIQUE_LABELS) as Technique[]).map((k) => (
                       <option key={k} value={k}>{TECHNIQUE_LABELS[k]}</option>
                     ))}
+                    <option value="__otro__">Otro / Personalizado…</option>
                   </select>
+                  {techSelect === "__otro__" && (
+                    <input type="text" value={customTech} onChange={e => setCustomTech(e.target.value)}
+                      placeholder="Escribe la técnica…"
+                      className="mt-2 w-full rounded-lg border border-ember/50 bg-ink/60 px-4 py-2.5 text-sm text-bone outline-none focus:border-ember placeholder:text-stone-600" />
+                  )}
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs uppercase tracking-wider text-stone-500">Dificultad</label>
