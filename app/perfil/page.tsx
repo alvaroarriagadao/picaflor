@@ -3,6 +3,7 @@ import { getUserSubscription } from "@/lib/subscription";
 import { todayStr } from "@/lib/daily";
 import { DifficultyBadge, TechniqueBadge } from "@/components/Badges";
 import SubscriptionSection from "@/components/SubscriptionSection";
+import ProfileEditForm from "@/components/ProfileEditForm";
 import type { Exercise } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,12 @@ export default async function ProfilePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const subscription = await getUserSubscription();
+  const [subscription, profileResult] = await Promise.all([
+    getUserSubscription(),
+    supabase.from("profiles").select("display_name, phone, instagram").eq("id", user!.id).maybeSingle(),
+  ]);
+
+  const profile = profileResult.data ?? { display_name: null, phone: null, instagram: null };
 
   const { data: logs } = await supabase
     .from("practice_logs")
@@ -75,6 +81,9 @@ export default async function ProfilePage() {
         <StatCard label="Días practicados" value={uniqueDays} suffix="días" accent="ember" />
         <StatCard label="Sesiones totales" value={totalSessions} suffix="" accent="sage" />
       </div>
+
+      {/* Perfil */}
+      <ProfileEditForm profile={profile} />
 
       {/* Suscripción */}
       <SubscriptionSection subscription={subscription} />

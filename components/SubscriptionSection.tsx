@@ -25,13 +25,10 @@ export default function SubscriptionSection({
     }
   };
 
-  const intervalLabel = billingInterval === "year" ? "anual" : "mensual";
+  const { isAdmin } = subscription;
+  const intervalLabel  = billingInterval === "year" ? "anual" : billingInterval === "week" ? "semanal" : "mensual";
   const periodEndLabel = currentPeriodEnd
-    ? currentPeriodEnd.toLocaleDateString("es-CL", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      })
+    ? currentPeriodEnd.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })
     : null;
 
   return (
@@ -52,14 +49,21 @@ export default function SubscriptionSection({
                   Activo
                 </span>
               </div>
-              <p className="text-sm text-stone-400">
-                Plan {intervalLabel}
-                {periodEndLabel && (
-                  <> · Renueva el {periodEndLabel}</>
-                )}
-              </p>
-              {provider && (
-                <p className="text-xs text-stone-600 mt-0.5 capitalize">
+              {isAdmin ? (
+                <p className="text-sm text-stone-400">Acceso total de administrador</p>
+              ) : provider === "contribution" ? (
+                <p className="text-sm text-stone-400">
+                  Ganado por aportes a la comunidad
+                  {periodEndLabel && <> · Hasta el {periodEndLabel}</>}
+                </p>
+              ) : (
+                <p className="text-sm text-stone-400">
+                  Plan {intervalLabel}
+                  {periodEndLabel && <> · Renueva el {periodEndLabel}</>}
+                </p>
+              )}
+              {provider && !isAdmin && provider !== "contribution" && (
+                <p className="text-xs text-stone-600 mt-0.5">
                   Vía {provider === "mercadopago" ? "MercadoPago" : "Stripe"}
                 </p>
               )}

@@ -200,8 +200,9 @@ export default function PreciosClient({ planA, planB }: Props) {
       <div className="mt-6 rounded-2xl border border-amber/20 bg-amber/5 px-5 py-4">
         <p className="font-display font-bold text-amber text-sm mb-1">💡 ¿Preferes ganarlo?</p>
         <p className="text-xs text-stone-400 leading-relaxed">
-          Aporta ejercicios a la comunidad — cada uno aprobado desbloquea +1 ejercicio extra.
-          Con <strong className="text-amber">15 aportes aprobados</strong> obtienes acceso Pro completo, gratis para siempre.
+          Aporta ejercicios a la comunidad — cada aprobado desbloquea +1 ejercicio extra.
+          Cada <strong className="text-amber">15 aportes aprobados</strong> te ganas{" "}
+          <strong className="text-amber">1 mes de Pro gratis</strong>. Los meses se acumulan.
         </p>
         <Link href="/comunidad/nuevo"
           className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-amber hover:underline">
