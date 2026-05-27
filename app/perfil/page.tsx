@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase-server";
+import { getUserSubscription } from "@/lib/subscription";
 import { todayStr } from "@/lib/daily";
 import { DifficultyBadge, TechniqueBadge } from "@/components/Badges";
+import SubscriptionSection from "@/components/SubscriptionSection";
 import type { Exercise } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,8 @@ export default async function ProfilePage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const subscription = await getUserSubscription();
 
   const { data: logs } = await supabase
     .from("practice_logs")
@@ -71,6 +75,9 @@ export default async function ProfilePage() {
         <StatCard label="Días practicados" value={uniqueDays} suffix="días" accent="ember" />
         <StatCard label="Sesiones totales" value={totalSessions} suffix="" accent="sage" />
       </div>
+
+      {/* Suscripción */}
+      <SubscriptionSection subscription={subscription} />
 
       {/* Historial reciente */}
       <h2 className="mb-4 mt-12 font-display text-2xl font-bold text-bone">

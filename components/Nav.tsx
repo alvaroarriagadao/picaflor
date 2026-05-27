@@ -15,9 +15,9 @@ const BASE_LINKS = [
   { href: "/perfil",       label: "Perfil"       },
 ];
 
-interface Props { isAdmin?: boolean }
+interface Props { isAdmin?: boolean; isPro?: boolean }
 
-export default function Nav({ isAdmin = false }: Props) {
+export default function Nav({ isAdmin = false, isPro = false }: Props) {
   const pathname    = usePathname();
   const router      = useRouter();
   const [tunerOpen, setTunerOpen] = useState(false);
@@ -67,6 +67,20 @@ export default function Nav({ isAdmin = false }: Props) {
               <span>♪</span>
               <span className="hidden sm:inline">Afinador</span>
             </button>
+
+            {/* Pro badge or upgrade CTA */}
+            {isPro ? (
+              <span className="hidden sm:inline-flex items-center rounded-full border border-amber/40 bg-amber/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber">
+                ◆ Pro
+              </span>
+            ) : (
+              <Link href="/precios"
+                className={`hidden sm:inline-flex rounded-lg border border-ember/40 bg-ember/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-ember transition hover:bg-ember/20 ${
+                  pathname.startsWith("/precios") ? "bg-ember/20" : ""
+                }`}>
+                ↑ Pro
+              </Link>
+            )}
 
             {/* Admin menu */}
             {isAdmin && (
