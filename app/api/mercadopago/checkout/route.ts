@@ -10,11 +10,17 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
+  if (!process.env.MP_ACCESS_TOKEN || !process.env.MP_PLAN_ID_MONTHLY || !process.env.MP_PLAN_ID_YEARLY)
+    return NextResponse.json(
+      { error: "Los pagos no están configurados todavía. Intenta en unos minutos." },
+      { status: 503 }
+    );
+
   const { interval } = (await req.json()) as { interval: "month" | "year" };
 
   const planId = interval === "year"
-    ? process.env.MP_PLAN_ID_YEARLY!
-    : process.env.MP_PLAN_ID_MONTHLY!;
+    ? process.env.MP_PLAN_ID_YEARLY
+    : process.env.MP_PLAN_ID_MONTHLY;
 
   const MercadoPagoConfig = require("mercadopago").MercadoPagoConfig;
   const PreApproval       = require("mercadopago").PreApproval;

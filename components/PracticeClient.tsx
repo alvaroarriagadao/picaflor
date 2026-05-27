@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import Metronome from "@/components/Metronome";
 import TabDisplay from "@/components/TabDisplay";
 import { DifficultyBadge, TechniqueBadge } from "@/components/Badges";
@@ -12,17 +13,23 @@ import type { Exercise } from "@/lib/types";
 interface Props {
   dailyExercise: Exercise;
   allExercises: Exercise[];
+  freePool: Exercise[];
   completedToday: boolean;
   streak: number;
   favoriteIds: string[];
+  isPro: boolean;
+  totalExercises: number;
 }
 
 export default function PracticeClient({
   dailyExercise,
   allExercises,
+  freePool,
   completedToday,
   streak,
   favoriteIds,
+  isPro,
+  totalExercises,
 }: Props) {
   const [current, setCurrent] = useState<Exercise>(dailyExercise);
   const favSet = new Set(favoriteIds);
@@ -31,13 +38,17 @@ export default function PracticeClient({
   const [localStreak, setLocalStreak] = useState(streak);
   const [saving, setSaving] = useState(false);
 
+  // Free users shuffle only within their accessible pool
+  const shufflePool = isPro ? allExercises : freePool;
+  const lockedCount = totalExercises - freePool.length;
+
   const shuffle = useCallback(() => {
-    const next = pickRandomExercise(allExercises, current.id);
+    const next = pickRandomExercise(shufflePool, current.id);
     if (next) {
       setCurrent(next);
       setIsDaily(next.id === dailyExercise.id);
     }
-  }, [allExercises, current.id, dailyExercise.id]);
+  }, [shufflePool, current.id, dailyExercise.id]);
 
   const backToDaily = () => {
     setCurrent(dailyExercise);
@@ -97,6 +108,21 @@ export default function PracticeClient({
           </div>
         </div>
       </div>
+
+      {/* Banner plan free */}
+      {!isPro && lockedCount > 0 && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-ember/20 bg-ember/5 px-4 py-3">
+          <p className="text-sm text-stone-300 leading-snug">
+            <span className="font-medium text-ember">🎲 Lick al azar</span> rota entre{" "}
+            <strong className="text-bone">{freePool.length} ejercicios</strong> —{" "}
+            hay <strong className="text-bone">{lockedCount} más</strong> desbloqueables con Pro.
+          </p>
+          <Link href="/precios"
+            className="shrink-0 rounded-lg bg-ember px-3 py-1.5 text-xs font-display font-bold uppercase tracking-wider text-ink hover:bg-amber transition">
+            Ver Pro
+          </Link>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         {/* Columna izquierda: ejercicio */}

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase-server";
 import { pickDailyExercise, todayStr } from "@/lib/daily";
+import { getUserSubscription } from "@/lib/subscription";
 import PracticeClient from "@/components/PracticeClient";
 import type { Exercise } from "@/lib/types";
 
@@ -41,6 +42,11 @@ export default async function PracticePage() {
 
   const all = (exercises ?? []) as Exercise[];
   const daily = pickDailyExercise(all);
+  const subscription = await getUserSubscription();
+  const isPro = subscription.plan === "pro";
+  const freePool = isFinite(subscription.effectiveLimit)
+    ? all.slice(0, subscription.effectiveLimit)
+    : all;
 
   const {
     data: { user },
@@ -84,9 +90,12 @@ export default async function PracticePage() {
     <PracticeClient
       dailyExercise={daily}
       allExercises={all}
+      freePool={freePool}
       completedToday={completedToday}
       streak={streak}
       favoriteIds={favoriteIds}
+      isPro={isPro}
+      totalExercises={all.length}
     />
   );
 }
