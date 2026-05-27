@@ -6,18 +6,31 @@ import { todayStr as getTodayStr } from "@/lib/daily";
 export const dynamic = "force-dynamic";
 
 export interface CalendarDay {
-  dateStr: string;
-  dayNum: number;
-  isToday: boolean;
-  isFuture: boolean;
-  isCurrentMonth: boolean;
+  dateStr:          string;
+  dayNum:           number;
+  isToday:          boolean;
+  isFuture:         boolean;
+  isCurrentMonth:   boolean;   // kept for interface compat
   completedTaskIds: string[];
 }
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Returns the ISO date string (YYYY-MM-DD) of the Monday of the given week */
+function getMondayOfWeek(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00");
+  const dow = d.getDay(); // 0=Sun
+  const diff = dow === 0 ? -6 : 1 - dow;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function PlanificadorPage({
   searchParams,
 }: {
-  searchParams: { m?: string };
+  searchParams: { w?: string };
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -25,15 +38,32 @@ export default async function PlanificadorPage({
 
   const today = getTodayStr();
 
-  // Parse requested month (YYYY-MM), default to current
-  const rawM  = searchParams.m ?? today.slice(0, 7);
-  const [yyyy, mm] = rawM.split("-").map(Number);
-  const year  = isNaN(yyyy) ? new Date().getFullYear() : yyyy;
-  const month = isNaN(mm)   ? new Date().getMonth() + 1 : mm;
+  // Parse week start (Monday), default to current week
+  const rawW = searchParams.w;
+  const weekStart =
+    rawW && /^\d{4}-\d{2}-\d{2}$/.test(rawW)
+      ? rawW
+      : getMondayOfWeek(today);
 
-  const daysInMonth = new Date(year, month, 0).getDate();
-  const firstDay    = `${year}-${String(month).padStart(2, "0")}-01`;
-  const lastDay     = `${year}-${String(month).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
+  // Build 7 CalendarDay stubs (fill completedTaskIds after fetch)
+  const weekDays: Omit<CalendarDay, "completedTaskIds">[] = Array.from(
+    { length: 7 },
+    (_, i) => {
+      const d = new Date(weekStart + "T12:00:00");
+      d.setDate(d.getDate() + i);
+      const ds = d.toISOString().slice(0, 10);
+      return {
+        dateStr:        ds,
+        dayNum:         d.getDate(),
+        isToday:        ds === today,
+        isFuture:       ds > today,
+        isCurrentMonth: true,
+      };
+    }
+  );
+
+  const firstDay = weekDays[0].dateStr;
+  const lastDay  = weekDays[6].dateStr;
 
   const [{ data: tasksData }, { data: completionsData }] = await Promise.all([
     supabase
@@ -50,62 +80,22 @@ export default async function PlanificadorPage({
       .lte("completed_on", lastDay),
   ]);
 
-  const tasks       = (tasksData ?? []) as PracticeTask[];
+  const tasks       = (tasksData       ?? []) as PracticeTask[];
   const completions = (completionsData ?? []) as DailyTaskCompletion[];
 
-  // Build calendar grid — Mon-first, 35 or 42 cells
-  const firstOfMonth = new Date(year, month - 1, 1);
-  const dow = firstOfMonth.getDay(); // 0=Sun
-  const startPad = dow === 0 ? 6 : dow - 1;
-
-  const calendarDays: CalendarDay[] = [];
-
-  // Padding from prev month
-  for (let i = startPad - 1; i >= 0; i--) {
-    const d = new Date(year, month - 1, -i);
-    calendarDays.push({
-      dateStr: d.toISOString().slice(0, 10),
-      dayNum: d.getDate(),
-      isToday: false, isFuture: false,
-      isCurrentMonth: false, completedTaskIds: [],
-    });
-  }
-
-  // Current month
-  for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    calendarDays.push({
-      dateStr,
-      dayNum: day,
-      isToday: dateStr === today,
-      isFuture: dateStr > today,
-      isCurrentMonth: true,
-      completedTaskIds: completions.filter(c => c.completed_on === dateStr).map(c => c.task_id),
-    });
-  }
-
-  // Fill remaining cells (next month)
-  const totalCells = calendarDays.length <= 35 ? 35 : 42;
-  let nextDay = 1;
-  while (calendarDays.length < totalCells) {
-    const d = new Date(year, month, nextDay++);
-    calendarDays.push({
-      dateStr: d.toISOString().slice(0, 10),
-      dayNum: d.getDate(),
-      isToday: false, isFuture: true,
-      isCurrentMonth: false, completedTaskIds: [],
-    });
-  }
-
-  const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
-    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const calendarDays: CalendarDay[] = weekDays.map(d => ({
+    ...d,
+    completedTaskIds: completions
+      .filter(c => c.completed_on === d.dateStr)
+      .map(c => c.task_id),
+  }));
 
   return (
     <PlannerClient
       tasks={tasks}
       calendarDays={calendarDays}
       todayStr={today}
-      currentMonth={{ year, month, label: `${MONTH_NAMES[month - 1]} ${year}` }}
+      weekStart={weekStart}
     />
   );
 }

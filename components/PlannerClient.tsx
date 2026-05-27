@@ -14,19 +14,19 @@ import type { PracticeTask, TaskCategory } from "@/lib/types";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface CalendarDay {
-  dateStr: string;
-  dayNum: number;
-  isToday: boolean;
-  isFuture: boolean;
-  isCurrentMonth: boolean;
+  dateStr:          string;
+  dayNum:           number;
+  isToday:          boolean;
+  isFuture:         boolean;
+  isCurrentMonth:   boolean;
   completedTaskIds: string[];
 }
 
 interface Props {
-  tasks: PracticeTask[];
-  calendarDays: CalendarDay[];
-  todayStr: string;
-  currentMonth: { year: number; month: number; label: string };
+  tasks:        PracticeTask[];
+  calendarDays: CalendarDay[];   // exactly 7 items (Mon → Sun)
+  todayStr:     string;
+  weekStart:    string;           // YYYY-MM-DD of Monday
 }
 
 type View = "calendar" | "tasks";
@@ -46,25 +46,35 @@ const colorBar: Record<string, string> = {
   sky: "bg-sky-400", stone: "bg-stone-500",
 };
 
-const colorDot: Record<string, string> = {
-  ember: "bg-ember", amber: "bg-amber", sage: "bg-sage",
-  sky: "bg-sky-400", stone: "bg-stone-400",
+const colorFill: Record<string, string> = {
+  ember: "bg-ember border-ember text-ink",
+  amber: "bg-amber border-amber text-ink",
+  sage:  "bg-sage  border-sage  text-ink",
+  sky:   "bg-sky-400 border-sky-400 text-ink",
+  stone: "bg-stone-500 border-stone-500 text-ink",
 };
 
-const DAY_HEADERS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const DAY_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+const MONTH_SHORT = [
+  "ene","feb","mar","abr","may","jun",
+  "jul","ago","sep","oct","nov","dic",
 ];
 
 function catIcon(c: TaskCategory)  { return TASK_CATEGORY_META[c]?.icon  ?? "◆"; }
 function catLabel(c: TaskCategory) { return TASK_CATEGORY_META[c]?.label ?? c;   }
 
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr + "T12:00:00");
-  const dayNames = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  return `${dayNames[d.getDay()]} ${d.getDate()} de ${MONTH_NAMES[d.getMonth()]}`;
+/** "26 may – 1 jun" or "26 – 31 mayo" */
+function formatWeekRange(weekStart: string): string {
+  const start = new Date(weekStart + "T12:00:00");
+  const end   = new Date(weekStart + "T12:00:00");
+  end.setDate(end.getDate() + 6);
+  const sm = MONTH_SHORT[start.getMonth()];
+  const em = MONTH_SHORT[end.getMonth()];
+  if (start.getMonth() === end.getMonth()) {
+    return `${start.getDate()} – ${end.getDate()} de ${sm}`;
+  }
+  return `${start.getDate()} ${sm} – ${end.getDate()} ${em}`;
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -73,10 +83,10 @@ export default function PlannerClient({
   tasks: initialTasks,
   calendarDays,
   todayStr,
-  currentMonth,
+  weekStart,
 }: Props) {
   const router = useRouter();
-  const [view, setView]   = useState<View>("calendar");
+  const [view,  setView]  = useState<View>("calendar");
   const [tasks, setTasks] = useState(initialTasks);
   const [isPending, startTransition] = useTransition();
 
@@ -87,56 +97,47 @@ export default function PlannerClient({
     return m;
   });
 
-  // Selected day defaults to today (if in this month) or first of month
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const hasTodayInMonth = calendarDays.some(d => d.dateStr === todayStr && d.isCurrentMonth);
-    if (hasTodayInMonth) return todayStr;
-    return calendarDays.find(d => d.isCurrentMonth)?.dateStr ?? todayStr;
-  });
-
-  // Month navigation
+  // Week navigation — push new ?w= param
   const navigate = (delta: number) => {
-    const d = new Date(currentMonth.year, currentMonth.month - 1 + delta, 1);
-    const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    router.push(`/planificador?m=${m}`);
+    const d = new Date(weekStart + "T12:00:00");
+    d.setDate(d.getDate() + delta * 7);
+    router.push(`/planificador?w=${d.toISOString().slice(0, 10)}`);
   };
 
   const handleToggle = (taskId: string, dateStr: string) => {
-    const set = new Set(doneMap[dateStr] ?? []);
+    const set    = new Set(doneMap[dateStr] ?? []);
     const wasDone = set.has(taskId);
     wasDone ? set.delete(taskId) : set.add(taskId);
     setDoneMap(prev => ({ ...prev, [dateStr]: set }));
     startTransition(() => toggleCompletion(taskId, dateStr, wasDone));
   };
 
-  // Stats for today
-  const todayDone   = doneMap[todayStr] ?? new Set<string>();
-  const totalMin    = tasks.reduce((s, t) => s + t.duration_minutes, 0);
-  const doneMin     = tasks.filter(t => todayDone.has(t.id)).reduce((s, t) => s + t.duration_minutes, 0);
-  const donePct     = totalMin > 0 ? Math.min(doneMin / totalMin, 1) : 0;
+  // Today stats
+  const todayDone    = doneMap[todayStr] ?? new Set<string>();
+  const totalMin     = tasks.reduce((s, t) => s + t.duration_minutes, 0);
+  const doneMin      = tasks.filter(t => todayDone.has(t.id)).reduce((s, t) => s + t.duration_minutes, 0);
+  const donePct      = totalMin > 0 ? Math.min(doneMin / totalMin, 1) : 0;
   const allDoneToday = tasks.length > 0 && todayDone.size >= tasks.length;
 
-  // Monthly completion rate
-  const currentDays  = calendarDays.filter(d => d.isCurrentMonth && !d.isFuture);
-  const monthTotal   = currentDays.length * tasks.length;
-  const monthDone    = currentDays.reduce((s, d) => s + (doneMap[d.dateStr]?.size ?? 0), 0);
-  const monthPct     = monthTotal > 0 ? Math.round((monthDone / monthTotal) * 100) : 0;
+  // Is current week (contains today)?
+  const isCurrentWeek = calendarDays.some(d => d.dateStr === todayStr);
 
-  const isCurrentMonth = (() => {
-    const now = new Date();
-    return now.getFullYear() === currentMonth.year && now.getMonth() + 1 === currentMonth.month;
-  })();
+  // Weekly completion %
+  const pastDays  = calendarDays.filter(d => !d.isFuture);
+  const weekTotal = pastDays.length * tasks.length;
+  const weekDone  = pastDays.reduce((s, d) => s + (doneMap[d.dateStr]?.size ?? 0), 0);
+  const weekPct   = weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : 0;
 
   return (
     <div>
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-extrabold text-bone">Planificador</h1>
-          {isCurrentMonth && tasks.length > 0 && (
+          {isCurrentWeek && tasks.length > 0 && (
             <p className="mt-0.5 text-sm text-stone-400">
               Hoy: {doneMin}/{totalMin} min
-              {allDoneToday && " · ¡Completado! 🎸"}
+              {allDoneToday && " · ¡Sesión completa! 🎸"}
             </p>
           )}
         </div>
@@ -147,7 +148,7 @@ export default function PlannerClient({
             className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
               view === "calendar" ? "bg-smoke text-bone shadow" : "text-stone-400 hover:text-bone"
             }`}>
-            Calendario
+            Semana
           </button>
           <button onClick={() => setView("tasks")}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
@@ -158,8 +159,8 @@ export default function PlannerClient({
         </div>
       </div>
 
-      {/* ── Today progress bar (only in calendar view, current month) ───────── */}
-      {view === "calendar" && isCurrentMonth && tasks.length > 0 && (
+      {/* ── Today progress bar ──────────────────────────────────────────────── */}
+      {view === "calendar" && isCurrentWeek && tasks.length > 0 && (
         <div className="mb-5 overflow-hidden rounded-xl border border-smoke bg-ash/40 px-5 py-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-xs uppercase tracking-wider text-stone-500">Progreso de hoy</p>
@@ -176,237 +177,197 @@ export default function PlannerClient({
         </div>
       )}
 
-      {/* ── Calendar view ───────────────────────────────────────────────────── */}
+      {/* ── Weekly calendar view ─────────────────────────────────────────────── */}
       {view === "calendar" && (
         <div>
-          {/* Month navigation */}
-          <div className="mb-4 flex items-center justify-between">
+          {/* Week navigation */}
+          <div className="mb-4 flex items-center justify-between gap-3">
             <button onClick={() => navigate(-1)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-smoke text-stone-400 transition hover:border-ember/40 hover:text-ember">
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-smoke text-stone-400 transition hover:border-ember/40 hover:text-ember text-lg">
               ‹
             </button>
             <div className="text-center">
-              <p className="font-display text-lg font-bold text-bone">{currentMonth.label}</p>
-              {monthTotal > 0 && (
-                <p className="text-xs text-stone-500">{monthPct}% del mes completado</p>
+              <p className="font-display text-base font-bold text-bone capitalize">
+                {formatWeekRange(weekStart)}
+              </p>
+              {weekTotal > 0 && (
+                <p className="text-[11px] text-stone-500">{weekPct}% de la semana completado</p>
               )}
             </div>
             <button onClick={() => navigate(1)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-smoke text-stone-400 transition hover:border-ember/40 hover:text-ember">
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-smoke text-stone-400 transition hover:border-ember/40 hover:text-ember text-lg">
               ›
             </button>
           </div>
 
-          {/* Calendar grid */}
-          <div className="mb-5 overflow-hidden rounded-2xl border border-smoke bg-ash/30">
-            {/* Day-of-week headers */}
-            <div className="grid grid-cols-7 border-b border-smoke">
-              {DAY_HEADERS.map(h => (
-                <div key={h} className="py-2 text-center text-[11px] font-medium uppercase tracking-wider text-stone-500">
-                  {h}
-                </div>
-              ))}
+          {/* ── Weekly grid ───────────────────────────────────────────────── */}
+          {tasks.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-smoke py-14 text-center">
+              <p className="text-stone-500 text-sm mb-4">Aún no tienes tareas de práctica</p>
+              <button onClick={() => setView("tasks")}
+                className="rounded-xl bg-ember px-5 py-2 text-sm font-display font-bold uppercase tracking-wider text-ink transition hover:bg-amber">
+                Crear mis tareas →
+              </button>
             </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-smoke bg-ash/30"
+              style={{ scrollbarWidth: "thin" }}>
+              <table className="w-full min-w-[520px] border-collapse">
+                {/* ── Day header row ─────────────────────────────────────── */}
+                <thead>
+                  <tr>
+                    {/* Task label column header */}
+                    <th className="w-40 border-b border-r border-smoke px-4 py-3 text-left">
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-stone-600">
+                        Tarea
+                      </span>
+                    </th>
 
-            {/* Days grid */}
-            <div className="grid grid-cols-7">
-              {calendarDays.map((day, idx) => {
-                const done  = doneMap[day.dateStr] ?? new Set<string>();
-                const total = tasks.length;
-                const cnt   = done.size;
-                const allDone = total > 0 && cnt >= total;
-                const hasSome = cnt > 0;
-                const isSelected = day.dateStr === selectedDate;
+                    {calendarDays.map(day => {
+                      const dayName = DAY_SHORT[new Date(day.dateStr + "T12:00:00").getDay()];
+                      return (
+                        <th key={day.dateStr}
+                          className={`border-b border-smoke px-2 py-3 text-center last:border-r-0 ${
+                            day.isToday ? "bg-ember/10" : ""
+                          }`}>
+                          <div className={`text-[10px] font-medium uppercase tracking-wider ${
+                            day.isToday ? "text-ember" : "text-stone-500"
+                          }`}>
+                            {dayName}
+                          </div>
+                          <div className={`mt-1 flex h-8 w-8 mx-auto items-center justify-center rounded-full font-display font-extrabold text-base ${
+                            day.isToday
+                              ? "bg-ember text-ink"
+                              : day.isFuture
+                              ? "text-stone-600"
+                              : "text-bone"
+                          }`}>
+                            {day.dayNum}
+                          </div>
+                          {day.isToday && (
+                            <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-ember">
+                              hoy
+                            </div>
+                          )}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
 
-                // Border between rows
-                const isLastInRow = (idx + 1) % 7 === 0;
-                const isLastRow   = idx >= calendarDays.length - 7;
+                {/* ── Task rows ──────────────────────────────────────────── */}
+                <tbody>
+                  {tasks.map((task, ti) => (
+                    <tr key={task.id}
+                      className={ti % 2 === 0 ? "bg-ash/10" : "bg-ash/30"}>
+                      {/* Task info */}
+                      <td className="border-r border-smoke/50 px-4 py-3.5">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`w-1 h-9 rounded-full shrink-0 ${colorBar[task.color] ?? "bg-ember"}`} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-bone leading-snug truncate max-w-[110px]">
+                              {task.title}
+                            </p>
+                            <p className="text-[10px] text-stone-500 mt-0.5 whitespace-nowrap">
+                              {catIcon(task.category)} {task.duration_minutes} min
+                            </p>
+                          </div>
+                        </div>
+                      </td>
 
-                return (
-                  <button
-                    key={day.dateStr}
-                    onClick={() => {
-                      setSelectedDate(day.dateStr);
-                    }}
-                    className={`relative flex flex-col items-center gap-1 py-2.5 px-1 transition-colors min-h-[72px]
-                      ${!isLastRow ? "border-b border-smoke/60" : ""}
-                      ${!isLastInRow ? "border-r border-smoke/60" : ""}
-                      ${isSelected
-                        ? "bg-ember/12"
-                        : day.isToday
-                        ? "bg-ember/6"
-                        : "hover:bg-ash/60"
-                      }
-                    `}
-                  >
-                    {/* Day number */}
-                    <span className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium transition-all
-                      ${isSelected && day.isToday
-                        ? "bg-ember text-ink font-bold"
-                        : isSelected
-                        ? "bg-smoke text-bone font-bold"
-                        : day.isToday
-                        ? "bg-ember/20 text-ember font-bold"
-                        : day.isCurrentMonth
-                        ? allDone
-                          ? "text-sage"
-                          : "text-bone"
-                        : "text-stone-700"
-                      }
-                    `}>
-                      {day.dayNum}
-                    </span>
+                      {/* Day cells */}
+                      {calendarDays.map(day => {
+                        const done = doneMap[day.dateStr]?.has(task.id) ?? false;
+                        return (
+                          <td key={day.dateStr}
+                            className={`px-2 py-3 text-center ${day.isToday ? "bg-ember/5" : ""}`}>
+                            {!day.isFuture ? (
+                              <button
+                                onClick={() => handleToggle(task.id, day.dateStr)}
+                                disabled={isPending}
+                                title={done ? "Marcar como pendiente" : "Marcar como completado"}
+                                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                                  done
+                                    ? (colorFill[task.color] ?? "bg-ember border-ember text-ink")
+                                    : "border-stone-700 bg-transparent hover:border-stone-400 hover:bg-ash/60"
+                                } disabled:opacity-60`}
+                              >
+                                {done && (
+                                  <svg className="h-3.5 w-3.5" viewBox="0 0 12 10" fill="none">
+                                    <path d="M1 5l3.5 3.5L11 1" stroke="currentColor"
+                                      strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                )}
+                              </button>
+                            ) : (
+                              <div className="mx-auto h-8 w-8 rounded-full border-2 border-stone-800 opacity-20" />
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
 
-                    {/* Task dots */}
-                    {total > 0 && !day.isFuture && (
-                      <div className="flex flex-wrap justify-center gap-0.5 max-w-[36px]">
-                        {tasks.map(task => (
-                          <div key={task.id}
-                            className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                              done.has(task.id)
-                                ? (colorDot[task.color] ?? "bg-ember")
-                                : day.isCurrentMonth
-                                ? "bg-stone-700"
-                                : "bg-stone-800"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    )}
+                {/* ── Footer: daily totals ───────────────────────────────── */}
+                <tfoot>
+                  <tr>
+                    <td className="border-r border-t border-smoke/50 px-4 py-2.5">
+                      <span className="text-[10px] uppercase tracking-wider text-stone-600">
+                        Total
+                      </span>
+                    </td>
+                    {calendarDays.map(day => {
+                      const cnt      = doneMap[day.dateStr]?.size ?? 0;
+                      const total    = tasks.length;
+                      const allDone  = total > 0 && cnt >= total;
+                      const doneMinD = tasks
+                        .filter(t => doneMap[day.dateStr]?.has(t.id))
+                        .reduce((s, t) => s + t.duration_minutes, 0);
 
-                    {/* Today ring */}
-                    {day.isToday && !isSelected && (
-                      <span className="absolute inset-0 rounded-none pointer-events-none" />
-                    )}
-                  </button>
-                );
-              })}
+                      return (
+                        <td key={day.dateStr}
+                          className={`border-t border-smoke/50 px-2 py-2.5 text-center ${
+                            day.isToday ? "bg-ember/5" : ""
+                          }`}>
+                          {!day.isFuture && total > 0 ? (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className={`text-xs font-bold font-mono ${
+                                allDone  ? "text-sage"
+                                : cnt > 0 ? "text-amber"
+                                : "text-stone-600"
+                              }`}>
+                                {cnt}/{total}
+                              </span>
+                              {doneMinD > 0 && (
+                                <span className="text-[9px] text-stone-600">
+                                  {doneMinD} min
+                                </span>
+                              )}
+                              {allDone && <span className="text-[10px]">🎸</span>}
+                            </div>
+                          ) : (
+                            <span className="text-stone-800 text-xs">—</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </tfoot>
+              </table>
             </div>
-          </div>
+          )}
 
-          {/* Selected day panel */}
-          <SelectedDayPanel
-            dateStr={selectedDate}
-            tasks={tasks}
-            doneIds={doneMap[selectedDate] ?? new Set()}
-            isPending={isPending}
-            onToggle={(id) => handleToggle(id, selectedDate)}
-            onGoToTasks={() => setView("tasks")}
-          />
+          {/* Scroll hint on small screens */}
+          <p className="mt-2 text-[10px] text-stone-700 sm:hidden text-center">
+            ← Desliza para ver todos los días →
+          </p>
         </div>
       )}
 
       {/* ── Tasks view ──────────────────────────────────────────────────────── */}
       {view === "tasks" && (
         <ManageView tasks={tasks} setTasks={setTasks} />
-      )}
-    </div>
-  );
-}
-
-// ─── Selected day panel ───────────────────────────────────────────────────────
-
-function SelectedDayPanel({
-  dateStr,
-  tasks,
-  doneIds,
-  isPending,
-  onToggle,
-  onGoToTasks,
-}: {
-  dateStr: string;
-  tasks: PracticeTask[];
-  doneIds: Set<string>;
-  isPending: boolean;
-  onToggle: (id: string) => void;
-  onGoToTasks: () => void;
-}) {
-  const isFuture = dateStr > new Date().toISOString().slice(0, 10);
-  const allDone  = tasks.length > 0 && doneIds.size >= tasks.length;
-  const totalMin = tasks.reduce((s, t) => s + t.duration_minutes, 0);
-  const doneMin  = tasks.filter(t => doneIds.has(t.id)).reduce((s, t) => s + t.duration_minutes, 0);
-
-  return (
-    <div className="rounded-2xl border border-smoke bg-ash/40 overflow-hidden">
-      {/* Header */}
-      <div className={`px-5 py-3 border-b border-smoke flex items-center justify-between ${
-        allDone ? "bg-sage/8" : ""
-      }`}>
-        <div>
-          <p className="text-xs uppercase tracking-wider text-stone-500">Práctica del día</p>
-          <p className="font-display font-bold text-bone mt-0.5 capitalize">
-            {formatDate(dateStr)}
-          </p>
-        </div>
-        {tasks.length > 0 && !isFuture && (
-          <div className="text-right">
-            <p className={`font-display text-xl font-extrabold ${allDone ? "text-sage" : "text-bone"}`}>
-              {doneMin}<span className="text-xs font-normal text-stone-500">/{totalMin} min</span>
-            </p>
-            {allDone && <p className="text-xs text-sage">¡Completado! 🎸</p>}
-          </div>
-        )}
-      </div>
-
-      {/* Task list */}
-      {tasks.length === 0 ? (
-        <div className="py-10 text-center">
-          <p className="text-stone-500 text-sm mb-3">Aún no tienes tareas de práctica</p>
-          <button onClick={onGoToTasks}
-            className="rounded-xl bg-ember px-5 py-2 text-sm font-display font-bold uppercase tracking-wider text-ink transition hover:bg-amber">
-            Crear mis tareas →
-          </button>
-        </div>
-      ) : (
-        <div className="divide-y divide-smoke/50">
-          {tasks.map(task => {
-            const done = doneIds.has(task.id);
-            return (
-              <button
-                key={task.id}
-                onClick={() => !isFuture && onToggle(task.id)}
-                disabled={isFuture || isPending}
-                className={`group w-full flex items-center gap-4 px-5 py-4 text-left transition-colors
-                  ${isFuture ? "opacity-40 cursor-default" : "hover:bg-ash/60"}
-                  ${done && !isFuture ? "bg-sage/5" : ""}
-                `}
-              >
-                {/* Color accent */}
-                <div className={`w-1 self-stretch rounded-full shrink-0 ${colorBar[task.color] ?? "bg-ember"} ${done ? "opacity-40" : ""}`} />
-
-                {/* Checkbox */}
-                <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-                  done
-                    ? "border-sage bg-sage text-ink"
-                    : isFuture
-                    ? "border-stone-700"
-                    : "border-stone-600 group-hover:border-ember"
-                }`}>
-                  {done && (
-                    <svg className="h-3 w-3" viewBox="0 0 12 10" fill="none">
-                      <path d="M1 5l3.5 3.5L11 1" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className={`font-medium transition-all ${done ? "line-through text-stone-500" : "text-bone"}`}>
-                    {task.title}
-                  </p>
-                  <p className="text-xs text-stone-500 mt-0.5">
-                    {catIcon(task.category)} {catLabel(task.category)}
-                  </p>
-                </div>
-
-                {/* Duration */}
-                <p className={`shrink-0 text-sm font-mono ${done ? "text-stone-600" : "text-stone-400"}`}>
-                  {task.duration_minutes}<span className="text-xs"> min</span>
-                </p>
-              </button>
-            );
-          })}
-        </div>
       )}
     </div>
   );
@@ -421,8 +382,8 @@ function ManageView({
   tasks: PracticeTask[];
   setTasks: (t: PracticeTask[]) => void;
 }) {
-  const [showForm, setShowForm]   = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showForm, setShowForm]     = useState(false);
+  const [editingId, setEditingId]   = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -449,7 +410,6 @@ function ManageView({
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-stone-300">Tareas de práctica diaria</p>
