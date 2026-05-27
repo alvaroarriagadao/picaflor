@@ -33,7 +33,7 @@ export default async function PlanificadorLayout({
             </h2>
             <p className="text-stone-400 mb-6 max-w-sm leading-relaxed">
               Organiza tu práctica diaria, fija metas y sigue tu progreso
-              semanal. Disponible con Picaflor Pro.
+              semanal. Disponible con Pickaflor Pro.
             </p>
             <Link
               href="/precios"

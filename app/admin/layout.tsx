@@ -22,7 +22,7 @@ export default async function AdminLayout({
       <div className="mb-6 flex items-center gap-3">
         <span className="text-ember">◆</span>
         <span className="font-display text-sm uppercase tracking-widest text-stone-500">
-          Admin · Picaflor
+          Admin · Pickaflor
         </span>
       </div>
       {children}

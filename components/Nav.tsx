@@ -35,7 +35,7 @@ export default function Nav({ isAdmin = false, isPro = false }: Props) {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
           <Link href="/practica" className="group flex items-center gap-2">
             <span className="text-xl text-ember transition group-hover:rotate-12">◆</span>
-            <span className="font-display text-lg font-bold tracking-tight text-bone">Picaflor</span>
+            <span className="font-display text-lg font-bold tracking-tight text-bone">Pickaflor</span>
           </Link>
 
           <nav className="flex items-center gap-1">

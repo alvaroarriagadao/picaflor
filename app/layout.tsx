@@ -21,7 +21,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Picaflor · Técnica diaria de guitarra",
+  title: "Pickaflor · Técnica diaria de guitarra",
   description:
     "Un lick o ejercicio de técnica cada día. Metrónomo integrado, biblioteca de ejercicios y seguimiento de tu racha. Para guitarristas que quieren mejorar de verdad.",
 };

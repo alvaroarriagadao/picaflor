@@ -47,7 +47,7 @@ export default function PaywallModal({ open, onClose }: Props) {
           <div className="mb-5 text-center">
             <p className="text-3xl mb-2">◆</p>
             <h2 className="font-display text-2xl font-extrabold text-bone">
-              Picaflor Pro
+              Pickaflor Pro
             </h2>
             <p className="mt-1 text-stone-400 text-sm">
               Accede a la biblioteca completa y al planificador.

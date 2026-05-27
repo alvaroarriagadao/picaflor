@@ -87,7 +87,7 @@ export default function PreciosClient({ planA, planB }: Props) {
       {/* Hero */}
       <div className="mb-10 text-center">
         <p className="mb-3 text-4xl">◆</p>
-        <h1 className="font-display text-4xl font-extrabold text-bone">Picaflor Pro</h1>
+        <h1 className="font-display text-4xl font-extrabold text-bone">Pickaflor Pro</h1>
         <p className="mt-3 text-stone-400 text-lg max-w-sm mx-auto leading-relaxed">
           Practica más, progresa más rápido. Acceso completo por menos de un café.
         </p>

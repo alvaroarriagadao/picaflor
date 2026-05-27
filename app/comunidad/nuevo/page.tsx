@@ -61,7 +61,7 @@ export default function ComunidadNuevoPage() {
       <div className="mb-8">
         <div className="mb-4 flex items-center gap-2 text-stone-500 text-sm">
           <span className="text-amber">◆</span>
-          <span className="uppercase tracking-widest font-display text-xs">Comunidad · Picaflor</span>
+          <span className="uppercase tracking-widest font-display text-xs">Comunidad · Pickaflor</span>
         </div>
         <h1 className="font-display text-3xl font-extrabold text-bone">Comparte un ejercicio</h1>
         <p className="mt-2 text-stone-400 leading-relaxed">

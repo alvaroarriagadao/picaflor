@@ -46,7 +46,7 @@ export default function SubscriptionSection({
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-display font-extrabold text-lg text-bone">
-                  Picaflor Pro
+                  Pickaflor Pro
                 </span>
                 <span className="rounded-full border border-amber/40 bg-amber/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber">
                   Activo

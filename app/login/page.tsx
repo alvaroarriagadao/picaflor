@@ -68,7 +68,7 @@ export default function LoginPage() {
         <div className="mb-8 text-center">
           <div className="mb-3 text-4xl text-ember">◆</div>
           <h1 className="font-display text-5xl font-extrabold tracking-tight text-bone">
-            Picaflor
+            Pickaflor
           </h1>
           <p className="mt-3 text-stone-400">
             Un lick cada día. Técnica que se vuelve músculo.
