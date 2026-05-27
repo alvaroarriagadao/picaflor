@@ -24,8 +24,12 @@ export async function POST(req: Request) {
     if (!userId) return NextResponse.json({ received: true });
 
     const isActive = resultAny.status === "authorized";
-    const billingInterval: "month" | "year" =
-      resultAny.preapproval_plan_id === process.env.MP_PLAN_ID_YEARLY ? "year" : "month";
+    const billingInterval: "week" | "month" | "year" =
+      resultAny.preapproval_plan_id === process.env.MP_PLAN_ID_YEARLY
+        ? "year"
+        : resultAny.auto_recurring?.frequency_type === "weeks"
+        ? "week"
+        : "month";
     const currentPeriodEnd = resultAny.next_payment_date
       ? new Date(resultAny.next_payment_date).toISOString()
       : null;

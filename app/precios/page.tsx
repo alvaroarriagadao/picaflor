@@ -3,26 +3,25 @@
 import { useState } from "react";
 import Link from "next/link";
 
-// ─── Pricing data ─────────────────────────────────────────────────────────────
-// Prices shown here are display only. Actual amounts are set in Stripe / MP dashboards.
+// ─── Planes — los IDs vienen de env vars (server → MP checkout route) ─────────
 const PLANS = [
   {
-    id: "monthly" as const,
-    label: "Mensual",
-    clp: "3.990",
-    usd: "4",
-    period: "/mes",
+    id: "plan_a" as const,
+    interval: "month" as const,       // mapea a MP_PLAN_ID_MONTHLY en el server
+    label: "Plan A",
+    price: "—",                        // actualiza con el precio real de tu plan MP
+    period: "/sem",
     note: null,
     badge: null,
   },
   {
-    id: "yearly" as const,
-    label: "Anual",
-    clp: "29.990",
-    usd: "32",
-    period: "/año",
-    note: "~$2.499 CLP/mes",
-    badge: "Ahorra 37%",
+    id: "plan_b" as const,
+    interval: "year" as const,        // mapea a MP_PLAN_ID_YEARLY en el server
+    label: "Plan B",
+    price: "—",
+    period: "/sem",
+    note: "Mejor valor",
+    badge: "Recomendado",
   },
 ];
 
@@ -38,28 +37,12 @@ const PRO_FEATURES = [
   "Biblioteca completa — todos los ejercicios",
   "Planificador diario de práctica",
   "Nuevos ejercicios cada mes",
-  "Filtros avanzados y favoritos sin límite",
+  "Filtros avanzados sin límite",
   "Acceso a ejercicios de la comunidad",
   "Apoyas directamente al creador 🤝",
 ];
 
-// ─── Payment helpers ──────────────────────────────────────────────────────────
-async function goToStripe(planId: "monthly" | "yearly") {
-  const priceId =
-    planId === "yearly"
-      ? process.env.NEXT_PUBLIC_STRIPE_PRICE_YEARLY
-      : process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY;
-
-  const res = await fetch("/api/stripe/checkout", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ priceId }),
-  });
-  const { url, error } = await res.json();
-  if (error) throw new Error(error);
-  window.location.href = url;
-}
-
+// ─── MP checkout ──────────────────────────────────────────────────────────────
 async function goToMercadoPago(interval: "month" | "year") {
   const res = await fetch("/api/mercadopago/checkout", {
     method: "POST",
@@ -73,31 +56,20 @@ async function goToMercadoPago(interval: "month" | "year") {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function PreciosPage() {
-  const [selected, setSelected] = useState<"monthly" | "yearly">("yearly");
-  const [loading, setLoading] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const [selected, setSelected] = useState<"plan_a" | "plan_b">("plan_b");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr]         = useState<string | null>(null);
 
   const plan = PLANS.find(p => p.id === selected)!;
 
-  const handleStripe = async () => {
-    setErr(null);
-    setLoading("stripe");
-    try {
-      await goToStripe(selected);
-    } catch (e: any) {
-      setErr(e.message);
-      setLoading(null);
-    }
-  };
-
   const handleMP = async () => {
     setErr(null);
-    setLoading("mp");
+    setLoading(true);
     try {
-      await goToMercadoPago(selected === "yearly" ? "year" : "month");
+      await goToMercadoPago(plan.interval);
     } catch (e: any) {
       setErr(e.message);
-      setLoading(null);
+      setLoading(false);
     }
   };
 
@@ -116,7 +88,7 @@ export default function PreciosPage() {
           Picaflor Pro
         </h1>
         <p className="mt-3 text-stone-400 text-lg max-w-sm mx-auto leading-relaxed">
-          Practica más, progresa más rápido. Acceso completo por menos de un café al mes.
+          Practica más, progresa más rápido. Acceso completo a toda la biblioteca.
         </p>
       </div>
 
@@ -141,7 +113,7 @@ export default function PreciosPage() {
           <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-ember/10" />
           <p className="mb-1 font-display font-bold text-ember text-sm uppercase tracking-wider">Pro</p>
           <p className="font-display text-2xl font-extrabold text-bone mb-4">
-            Desde $3.990 CLP<span className="text-sm font-normal text-stone-500">/mes</span>
+            Suscripción<span className="text-sm font-normal text-stone-500 ml-1">recurrente</span>
           </p>
           <ul className="space-y-2">
             {PRO_FEATURES.map((f, i) => (
@@ -172,11 +144,7 @@ export default function PreciosPage() {
                 </span>
               )}
               <p className="font-display font-bold text-bone">{p.label}</p>
-              <p className="text-2xl font-display font-extrabold text-bone mt-1">
-                ${p.clp}
-                <span className="text-xs text-stone-500 font-normal"> CLP{p.period}</span>
-              </p>
-              {p.note && <p className="text-xs text-stone-500 mt-0.5">{p.note}</p>}
+              {p.note && <p className="text-xs text-stone-500 mt-1">{p.note}</p>}
             </button>
           ))}
         </div>
@@ -189,52 +157,29 @@ export default function PreciosPage() {
         </div>
       )}
 
-      {/* Payment buttons */}
-      <div className="space-y-3">
-        {/* Stripe — international cards */}
-        <button onClick={handleStripe} disabled={!!loading}
-          className="group flex w-full items-center justify-between rounded-xl border border-smoke bg-ash/60 px-5 py-4 transition hover:border-ember/50 hover:bg-ash disabled:opacity-50">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#635BFF]/20">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none">
-                <rect width="24" height="24" rx="4" fill="#635BFF" fillOpacity=".15"/>
-                <path d="M11.5 8c-1.7 0-2.8.9-2.8 2.2 0 1.5 1.1 2 2.3 2.4 1 .3 1.3.5 1.3.9 0 .5-.4.8-1.2.8-.9 0-1.7-.4-2.2-.9l-.8 1.4c.7.6 1.7 1 2.9 1 1.9 0 3-.9 3-2.3 0-1.5-1-2-2.2-2.4-1-.3-1.4-.5-1.4-.9 0-.4.3-.7 1-.7.8 0 1.5.3 2 .7l.8-1.4C13.5 8.4 12.6 8 11.5 8z" fill="#635BFF"/>
-              </svg>
-            </div>
-            <div className="text-left">
-              <p className="font-medium text-bone text-sm">Pagar con tarjeta internacional</p>
-              <p className="text-xs text-stone-500">Visa, Mastercard, Amex — vía Stripe</p>
-            </div>
+      {/* CTA — MercadoPago */}
+      <button onClick={handleMP} disabled={loading}
+        className="group flex w-full items-center justify-between rounded-xl border border-[#009EE3]/30 bg-[#009EE3]/8 px-5 py-4 transition hover:border-[#009EE3]/60 hover:bg-[#009EE3]/12 disabled:opacity-50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#009EE3]/20">
+            <svg className="h-5 w-5" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="16" fill="#009EE3" fillOpacity=".25"/>
+              <text x="5" y="22" fontSize="14" fontWeight="bold" fill="#009EE3">MP</text>
+            </svg>
           </div>
-          <span className="text-stone-500 group-hover:text-ember transition text-sm">
-            {loading === "stripe" ? "Redirigiendo…" : "→"}
-          </span>
-        </button>
-
-        {/* MercadoPago — Chile */}
-        <button onClick={handleMP} disabled={!!loading}
-          className="group flex w-full items-center justify-between rounded-xl border border-smoke bg-ash/60 px-5 py-4 transition hover:border-[#009EE3]/40 hover:bg-ash disabled:opacity-50">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#009EE3]/15">
-              <svg className="h-5 w-5" viewBox="0 0 32 32" fill="none">
-                <circle cx="16" cy="16" r="16" fill="#009EE3" fillOpacity=".2"/>
-                <text x="5" y="22" fontSize="14" fontWeight="bold" fill="#009EE3">MP</text>
-              </svg>
-            </div>
-            <div className="text-left">
-              <p className="font-medium text-bone text-sm">Pagar con MercadoPago</p>
-              <p className="text-xs text-stone-500">Webpay, tarjetas chilenas, cuotas</p>
-            </div>
+          <div className="text-left">
+            <p className="font-display font-bold text-bone">Suscribirse con MercadoPago</p>
+            <p className="text-xs text-stone-500 mt-0.5">Webpay · tarjetas chilenas · cuotas</p>
           </div>
-          <span className="text-stone-500 group-hover:text-[#009EE3] transition text-sm">
-            {loading === "mp" ? "Redirigiendo…" : "→"}
-          </span>
-        </button>
-      </div>
+        </div>
+        <span className="text-[#009EE3] transition text-lg font-bold">
+          {loading ? "…" : "→"}
+        </span>
+      </button>
 
       {/* Fine print */}
       <p className="mt-5 text-center text-xs text-stone-600 leading-relaxed">
-        Suscripción recurrente · Cancela cuando quieras desde tu perfil ·
+        Suscripción recurrente · Cancela cuando quieras desde tu cuenta MercadoPago ·
         Sin contratos ni letra chica
       </p>
     </div>
