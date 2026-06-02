@@ -27,27 +27,69 @@ function fmt(secs: number) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SessionTimer({ tasks, todayLogs: initial }: Props) {
-  const [running,    setRunning]   = useState(false);
-  const [elapsed,    setElapsed]   = useState(0);
+  // ── Time tracking via Date.now() — survives background-tab throttling ──────
+  // accumulated = seconds counted in previous runs
+  // startedAt   = Date.now() timestamp of the current run start (null if stopped)
+  const [accumulated, setAccumulated] = useState(0);
+  const [startedAt,   setStartedAt]   = useState<number | null>(null);
+  const [displaySecs, setDisplaySecs] = useState(0);   // drives the UI render
+
   const [taskId,     setTaskId]    = useState<string>(tasks[0]?.id ?? "");
   const [saved,      setSaved]     = useState(false);
   const [todayLogs,  setTodayLogs] = useState<TimeLogEntry[]>(initial);
-  const [showDetail, setShowDetail] = useState(false);   // expand progress panel
+  const [showDetail, setShowDetail] = useState(false);
   const [isPending,  startTransition] = useTransition();
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rafRef = useRef<number | null>(null);
 
+  const running = startedAt !== null;
+
+  // Recalculate elapsed every animation frame while running
   useEffect(() => {
+    if (!running) return;
+    const tick = () => {
+      const secs = accumulated + Math.floor((Date.now() - startedAt!) / 1000);
+      setDisplaySecs(secs);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [running, accumulated, startedAt]);
+
+  // Also recalculate when tab becomes visible again
+  useEffect(() => {
+    const onVisible = () => {
+      if (startedAt !== null) {
+        setDisplaySecs(accumulated + Math.floor((Date.now() - startedAt) / 1000));
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [accumulated, startedAt]);
+
+  const elapsed = running
+    ? accumulated + Math.floor((Date.now() - startedAt!) / 1000)
+    : displaySecs;
+
+  const toggle = () => {
+    setSaved(false);
     if (running) {
-      intervalRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
+      // Pause: snapshot current elapsed into accumulated
+      const snapped = accumulated + Math.floor((Date.now() - startedAt!) / 1000);
+      setAccumulated(snapped);
+      setDisplaySecs(snapped);
+      setStartedAt(null);
     } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      // Start / resume
+      setStartedAt(Date.now());
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [running]);
+  };
 
-  const toggle = () => { setSaved(false); setRunning(r => !r); };
-
-  const reset = () => { setRunning(false); setElapsed(0); setSaved(false); };
+  const reset = () => {
+    setStartedAt(null);
+    setAccumulated(0);
+    setDisplaySecs(0);
+    setSaved(false);
+  };
 
   const save = () => {
     if (elapsed < 1 || !taskId) return;
@@ -73,7 +115,7 @@ export default function SessionTimer({ tasks, todayLogs: initial }: Props) {
   todayLogs.forEach(l => { minutesByTask[l.task_id] = (minutesByTask[l.task_id] ?? 0) + l.minutes; });
   const hasProgress = tasks.some(t => (minutesByTask[t.id] ?? 0) > 0);
   const elapsedMins = Math.round(elapsed / 60);
-  const isStopped   = !running && elapsed > 0;
+  const isStopped = !running && elapsed > 0;
 
   if (tasks.length === 0) {
     return (
