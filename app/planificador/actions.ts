@@ -60,6 +60,58 @@ export async function deleteTask(id: string) {
   revalidatePath("/planificador");
 }
 
+// ─── Practice time log ───────────────────────────────────────────────────────
+
+export async function logPracticeTime(
+  taskId: string,
+  minutes: number,
+): Promise<{ error: string | null }> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Sin sesión" };
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    const { error: insertErr } = await supabase
+      .from("practice_time_logs")
+      .insert({ user_id: user.id, task_id: taskId, logged_on: today, minutes });
+    if (insertErr) return { error: insertErr.message };
+
+    // Auto-complete task if total logged >= target today
+    const { data: taskRow } = await supabase
+      .from("practice_tasks")
+      .select("duration_minutes")
+      .eq("id", taskId)
+      .single();
+
+    if (taskRow) {
+      const { data: logsToday } = await supabase
+        .from("practice_time_logs")
+        .select("minutes")
+        .eq("user_id", user.id)
+        .eq("task_id", taskId)
+        .eq("logged_on", today);
+
+      const total = (logsToday ?? []).reduce((s, r) => s + r.minutes, 0);
+      if (total >= taskRow.duration_minutes) {
+        await supabase
+          .from("daily_task_completions")
+          .upsert(
+            { user_id: user.id, task_id: taskId, completed_on: today },
+            { onConflict: "user_id,task_id,completed_on" },
+          );
+      }
+    }
+
+    revalidatePath("/planificador");
+    revalidatePath("/practica");
+    return { error: null };
+  } catch (e: any) {
+    return { error: e.message };
+  }
+}
+
 // ─── Completions ──────────────────────────────────────────────────────────────
 
 export async function toggleCompletion(taskId: string, dateStr: string, currentlyDone: boolean) {

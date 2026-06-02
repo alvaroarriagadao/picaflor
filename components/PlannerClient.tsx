@@ -27,6 +27,7 @@ interface Props {
   calendarDays: CalendarDay[];   // exactly 7 items (Mon → Sun)
   todayStr:     string;
   weekStart:    string;           // YYYY-MM-DD of Monday
+  timeLogMap:   Record<string, Record<string, number>>; // dateStr→taskId→minutes
 }
 
 type View = "calendar" | "tasks";
@@ -84,6 +85,7 @@ export default function PlannerClient({
   calendarDays,
   todayStr,
   weekStart,
+  timeLogMap,
 }: Props) {
   const router = useRouter();
   const [view,  setView]  = useState<View>("calendar");
@@ -277,30 +279,54 @@ export default function PlannerClient({
 
                       {/* Day cells */}
                       {calendarDays.map(day => {
-                        const done = doneMap[day.dateStr]?.has(task.id) ?? false;
+                        const done       = doneMap[day.dateStr]?.has(task.id) ?? false;
+                        const logged     = timeLogMap[day.dateStr]?.[task.id] ?? 0;
+                        const target     = task.duration_minutes;
+                        const pct        = Math.min(logged / target, 1);
+                        const hasLogged  = logged > 0;
+
                         return (
                           <td key={day.dateStr}
-                            className={`px-2 py-3 text-center ${day.isToday ? "bg-ember/5" : ""}`}>
+                            className={`px-1.5 py-2 text-center ${day.isToday ? "bg-ember/5" : ""}`}>
                             {!day.isFuture ? (
-                              <button
-                                onClick={() => handleToggle(task.id, day.dateStr)}
-                                disabled={isPending}
-                                title={done ? "Marcar como pendiente" : "Marcar como completado"}
-                                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-200 ${
-                                  done
-                                    ? (colorFill[task.color] ?? "bg-ember border-ember text-ink")
-                                    : "border-stone-700 bg-transparent hover:border-stone-400 hover:bg-ash/60"
-                                } disabled:opacity-60`}
-                              >
-                                {done && (
-                                  <svg className="h-3.5 w-3.5" viewBox="0 0 12 10" fill="none">
-                                    <path d="M1 5l3.5 3.5L11 1" stroke="currentColor"
-                                      strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
+                              <div className="flex flex-col items-center gap-1">
+                                <button
+                                  onClick={() => handleToggle(task.id, day.dateStr)}
+                                  disabled={isPending}
+                                  title={done ? "Marcar como pendiente" : "Marcar como completado"}
+                                  className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                                    done
+                                      ? (colorFill[task.color] ?? "bg-ember border-ember text-ink")
+                                      : "border-stone-700 bg-transparent hover:border-stone-400 hover:bg-ash/60"
+                                  } disabled:opacity-60`}
+                                >
+                                  {done && (
+                                    <svg className="h-3 w-3" viewBox="0 0 12 10" fill="none">
+                                      <path d="M1 5l3.5 3.5L11 1" stroke="currentColor"
+                                        strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  )}
+                                </button>
+
+                                {/* Minutes progress (only if time was logged) */}
+                                {hasLogged && (
+                                  <div className="w-full px-0.5 space-y-0.5">
+                                    <div className="h-1 w-full overflow-hidden rounded-full bg-smoke">
+                                      <div
+                                        className={`h-full rounded-full ${done ? "bg-sage" : (colorBar[task.color] ?? "bg-ember")}`}
+                                        style={{ width: `${pct * 100}%` }}
+                                      />
+                                    </div>
+                                    <p className={`text-[9px] font-mono leading-none ${
+                                      done ? "text-sage" : "text-stone-500"
+                                    }`}>
+                                      {logged}m
+                                    </p>
+                                  </div>
                                 )}
-                              </button>
+                              </div>
                             ) : (
-                              <div className="mx-auto h-8 w-8 rounded-full border-2 border-stone-800 opacity-20" />
+                              <div className="mx-auto h-7 w-7 rounded-full border-2 border-stone-800 opacity-20" />
                             )}
                           </td>
                         );

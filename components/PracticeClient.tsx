@@ -6,19 +6,22 @@ import Metronome from "@/components/Metronome";
 import TabDisplay from "@/components/TabDisplay";
 import { DifficultyBadge, TechniqueBadge } from "@/components/Badges";
 import FavoriteButton from "@/components/FavoriteButton";
+import SessionTimer from "@/components/SessionTimer";
 import { pickRandomExercise } from "@/lib/daily";
 import { createClient } from "@/lib/supabase-client";
-import type { Exercise } from "@/lib/types";
+import type { Exercise, PracticeTask } from "@/lib/types";
 
 interface Props {
-  dailyExercise: Exercise;
-  allExercises: Exercise[];
-  freePool: Exercise[];
+  dailyExercise:  Exercise;
+  allExercises:   Exercise[];
+  freePool:       Exercise[];
   completedToday: boolean;
-  streak: number;
-  favoriteIds: string[];
-  isPro: boolean;
+  streak:         number;
+  favoriteIds:    string[];
+  isPro:          boolean;
   totalExercises: number;
+  practiceTasks:  PracticeTask[];
+  todayTimeLogs:  { task_id: string; minutes: number }[];
 }
 
 export default function PracticeClient({
@@ -30,6 +33,8 @@ export default function PracticeClient({
   favoriteIds,
   isPro,
   totalExercises,
+  practiceTasks,
+  todayTimeLogs,
 }: Props) {
   const [current, setCurrent] = useState<Exercise>(dailyExercise);
   const favSet = new Set(favoriteIds);
@@ -180,13 +185,17 @@ export default function PracticeClient({
           </div>
         </div>
 
-        {/* Columna derecha: metrónomo */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        {/* Columna derecha: metrónomo + cronómetro */}
+        <div className="lg:sticky lg:top-24 lg:self-start space-y-0">
           <Metronome
             key={current.id}
             initialBpm={current.bpm_start}
             bpmStart={current.bpm_start}
             bpmTarget={current.bpm_target}
+          />
+          <SessionTimer
+            tasks={practiceTasks}
+            todayLogs={todayTimeLogs}
           />
         </div>
       </div>

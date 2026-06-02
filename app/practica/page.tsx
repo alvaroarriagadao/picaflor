@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase-server";
 import { pickDailyExercise, todayStr } from "@/lib/daily";
 import { getUserSubscription } from "@/lib/subscription";
 import PracticeClient from "@/components/PracticeClient";
-import type { Exercise } from "@/lib/types";
+import type { Exercise, PracticeTask } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -56,23 +56,41 @@ export default async function PracticePage() {
   let streak = 0;
   let favoriteIds: string[] = [];
 
+  let practiceTasks: PracticeTask[] = [];
+  let todayTimeLogs: { task_id: string; minutes: number }[] = [];
+
   if (user) {
-    const [{ data: logs }, { data: favs }] = await Promise.all([
-      supabase
-        .from("practice_logs")
-        .select("practiced_on")
-        .eq("user_id", user.id)
-        .order("practiced_on", { ascending: false }),
-      supabase
-        .from("user_favorites")
-        .select("exercise_id")
-        .eq("user_id", user.id),
-    ]);
+    const today = todayStr();
+    const [{ data: logs }, { data: favs }, { data: tasksData }, { data: timeLogs }] =
+      await Promise.all([
+        supabase
+          .from("practice_logs")
+          .select("practiced_on")
+          .eq("user_id", user.id)
+          .order("practiced_on", { ascending: false }),
+        supabase
+          .from("user_favorites")
+          .select("exercise_id")
+          .eq("user_id", user.id),
+        supabase
+          .from("practice_tasks")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true }),
+        supabase
+          .from("practice_time_logs")
+          .select("task_id, minutes")
+          .eq("user_id", user.id)
+          .eq("logged_on", today),
+      ]);
 
     const dates = (logs ?? []).map((l) => l.practiced_on as string);
-    completedToday = dates.includes(todayStr());
+    completedToday = dates.includes(today);
     streak = computeStreak(dates);
     favoriteIds = (favs ?? []).map((f) => f.exercise_id as string);
+    practiceTasks = (tasksData ?? []) as PracticeTask[];
+    todayTimeLogs = (timeLogs ?? []) as { task_id: string; minutes: number }[];
   }
 
   if (!daily) {
@@ -96,6 +114,8 @@ export default async function PracticePage() {
       favoriteIds={favoriteIds}
       isPro={isPro}
       totalExercises={all.length}
+      practiceTasks={practiceTasks}
+      todayTimeLogs={todayTimeLogs}
     />
   );
 }

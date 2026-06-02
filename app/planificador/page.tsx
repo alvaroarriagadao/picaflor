@@ -65,23 +65,38 @@ export default async function PlanificadorPage({
   const firstDay = weekDays[0].dateStr;
   const lastDay  = weekDays[6].dateStr;
 
-  const [{ data: tasksData }, { data: completionsData }] = await Promise.all([
-    supabase
-      .from("practice_tasks")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("daily_task_completions")
-      .select("*")
-      .eq("user_id", user.id)
-      .gte("completed_on", firstDay)
-      .lte("completed_on", lastDay),
-  ]);
+  const [{ data: tasksData }, { data: completionsData }, { data: timeLogsData }] =
+    await Promise.all([
+      supabase
+        .from("practice_tasks")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("daily_task_completions")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("completed_on", firstDay)
+        .lte("completed_on", lastDay),
+      supabase
+        .from("practice_time_logs")
+        .select("task_id, logged_on, minutes")
+        .eq("user_id", user.id)
+        .gte("logged_on", firstDay)
+        .lte("logged_on", lastDay),
+    ]);
 
   const tasks       = (tasksData       ?? []) as PracticeTask[];
   const completions = (completionsData ?? []) as DailyTaskCompletion[];
+
+  // Build timeLogMap: dateStr → taskId → totalMinutes
+  const timeLogMap: Record<string, Record<string, number>> = {};
+  (timeLogsData ?? []).forEach((l: any) => {
+    if (!timeLogMap[l.logged_on]) timeLogMap[l.logged_on] = {};
+    timeLogMap[l.logged_on][l.task_id] =
+      (timeLogMap[l.logged_on][l.task_id] ?? 0) + l.minutes;
+  });
 
   const calendarDays: CalendarDay[] = weekDays.map(d => ({
     ...d,
@@ -96,6 +111,7 @@ export default async function PlanificadorPage({
       calendarDays={calendarDays}
       todayStr={today}
       weekStart={weekStart}
+      timeLogMap={timeLogMap}
     />
   );
 }
