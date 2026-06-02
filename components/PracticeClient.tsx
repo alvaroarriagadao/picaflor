@@ -185,18 +185,20 @@ export default function PracticeClient({
           </div>
         </div>
 
-        {/* Columna derecha: metrónomo + cronómetro */}
-        <div className="lg:sticky lg:top-24 lg:self-start space-y-0">
-          <Metronome
-            key={current.id}
-            initialBpm={current.bpm_start}
-            bpmStart={current.bpm_start}
-            bpmTarget={current.bpm_target}
-          />
+        {/* Columna derecha: cronómetro (arriba) + metrónomo */}
+        <div className="lg:sticky lg:top-6 lg:self-start">
           <SessionTimer
             tasks={practiceTasks}
             todayLogs={todayTimeLogs}
           />
+          <div className="mt-3">
+            <Metronome
+              key={current.id}
+              initialBpm={current.bpm_start}
+              bpmStart={current.bpm_start}
+              bpmTarget={current.bpm_target}
+            />
+          </div>
         </div>
       </div>
     </div>
