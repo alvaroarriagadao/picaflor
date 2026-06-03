@@ -65,13 +65,20 @@ export async function deleteTask(id: string) {
 export async function logPracticeTime(
   taskId: string,
   minutes: number,
+  localDate?: string,            // YYYY-MM-DD from the browser (local timezone)
 ): Promise<{ error: string | null }> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Sin sesión" };
 
-    const today = new Date().toISOString().slice(0, 10);
+    // Prefer client-supplied date; fallback to Santiago timezone
+    const today = localDate && /^\d{4}-\d{2}-\d{2}$/.test(localDate)
+      ? localDate
+      : new Intl.DateTimeFormat("es-CL", {
+          timeZone: "America/Santiago",
+          year: "numeric", month: "2-digit", day: "2-digit",
+        }).format(new Date()).split("-").reverse().join("-");
 
     const { error: insertErr } = await supabase
       .from("practice_time_logs")

@@ -94,8 +94,10 @@ export default function SessionTimer({ tasks, todayLogs: initial }: Props) {
   const save = () => {
     if (elapsed < 1 || !taskId) return;
     const mins = Math.max(1, Math.round(elapsed / 60));
+    // Get local date from browser (avoids UTC mismatch on server)
+    const localDate = new Intl.DateTimeFormat("en-CA").format(new Date()); // "YYYY-MM-DD"
     startTransition(async () => {
-      const { error } = await logPracticeTime(taskId, mins);
+      const { error } = await logPracticeTime(taskId, mins, localDate);
       if (!error) {
         setTodayLogs(prev => {
           const ex = prev.find(l => l.task_id === taskId);
