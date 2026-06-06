@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Outfit, JetBrains_Mono } from "next/font/google";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -21,9 +22,32 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pickaflor · Técnica diaria de guitarra",
+  title: "Picaflor · Técnica diaria de guitarra",
   description:
     "Un lick o ejercicio de técnica cada día. Metrónomo integrado, biblioteca de ejercicios y seguimiento de tu racha. Para guitarristas que quieren mejorar de verdad.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Picaflor",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    title: "Picaflor · Técnica diaria de guitarra",
+    description:
+      "Un lick o ejercicio de técnica cada día. Metrónomo integrado, biblioteca de ejercicios y seguimiento de tu racha.",
+    type: "website",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#0c0a09",
 };
 
 export default function RootLayout({
@@ -32,9 +56,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    <html
+      lang="es"
+      className={`${display.variable} ${body.variable} ${mono.variable}`}
+    >
       <body className="font-body antialiased">
         <div className="relative z-10">{children}</div>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

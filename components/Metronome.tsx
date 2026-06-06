@@ -127,10 +127,10 @@ export default function Metronome({ initialBpm, bpmStart, bpmTarget }: Metronome
     setBpm(b => Math.min(280, Math.max(30, b + delta)));
 
   return (
-    <div className="rounded-2xl border border-smoke bg-ash/60 p-6 backdrop-blur">
+    <div className="rounded-2xl border border-smoke bg-ash/60 p-4 sm:p-6 backdrop-blur">
       {/* Header row: label + beat dots */}
-      <div className="mb-5 flex items-center justify-between">
-        <span className="font-display text-sm uppercase tracking-[0.2em] text-stone-400">
+      <div className="mb-4 flex items-center justify-between">
+        <span className="font-display text-xs uppercase tracking-[0.2em] text-stone-400 sm:text-sm">
           Metrónomo
         </span>
         <div className="flex gap-1.5">
@@ -147,24 +147,25 @@ export default function Metronome({ initialBpm, bpmStart, bpmTarget }: Metronome
       </div>
 
       {/* BPM display */}
-      <div className="mb-6 text-center">
-        <div className="font-display text-7xl font-extrabold tabular-nums tracking-tight text-bone">
+      <div className="mb-4 text-center">
+        <div className="font-display text-6xl font-extrabold tabular-nums tracking-tight text-bone sm:text-7xl">
           {bpm}
         </div>
         <div className="mt-1 text-xs uppercase tracking-[0.3em] text-stone-500">BPM</div>
       </div>
 
-      {/* BPM Slider */}
+      {/* BPM Slider — larger touch target on mobile */}
       <input type="range" min={30} max={280} value={bpm}
         onChange={e => setBpm(Number(e.target.value))}
-        className="mb-5 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-smoke accent-ember"
+        className="mb-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-smoke accent-ember"
+        style={{ touchAction: "pan-y" }}
       />
 
-      {/* Fine adjust */}
-      <div className="mb-5 grid grid-cols-4 gap-2">
+      {/* Fine adjust — bigger buttons on mobile */}
+      <div className="mb-4 grid grid-cols-4 gap-1.5 sm:gap-2">
         {[-5, -1, +1, +5].map(d => (
           <button key={d} onClick={() => adjustBpm(d)}
-            className="rounded-lg border border-smoke bg-ink/40 py-2 font-mono text-sm text-stone-300 transition hover:border-ember hover:text-ember">
+            className="rounded-lg border border-smoke bg-ink/40 py-2.5 font-mono text-sm text-stone-300 transition active:bg-smoke hover:border-ember hover:text-ember sm:py-2">
             {d > 0 ? `+${d}` : d}
           </button>
         ))}
@@ -172,16 +173,16 @@ export default function Metronome({ initialBpm, bpmStart, bpmTarget }: Metronome
 
       {/* BPM Presets */}
       {(bpmStart || bpmTarget) && (
-        <div className="mb-5 flex gap-2">
+        <div className="mb-4 flex gap-2">
           {bpmStart && (
             <button onClick={() => setBpm(bpmStart)}
-              className="flex-1 rounded-lg border border-sage/40 bg-sage/10 py-2 text-xs uppercase tracking-wider text-sage transition hover:bg-sage/20">
+              className="flex-1 rounded-lg border border-sage/40 bg-sage/10 py-2.5 text-xs uppercase tracking-wider text-sage transition active:bg-sage/20 hover:bg-sage/20 sm:py-2">
               Inicio · {bpmStart}
             </button>
           )}
           {bpmTarget && (
             <button onClick={() => setBpm(bpmTarget)}
-              className="flex-1 rounded-lg border border-amber/40 bg-amber/10 py-2 text-xs uppercase tracking-wider text-amber transition hover:bg-amber/20">
+              className="flex-1 rounded-lg border border-amber/40 bg-amber/10 py-2.5 text-xs uppercase tracking-wider text-amber transition active:bg-amber/20 hover:bg-amber/20 sm:py-2">
               Meta · {bpmTarget}
             </button>
           )}
@@ -189,28 +190,28 @@ export default function Metronome({ initialBpm, bpmStart, bpmTarget }: Metronome
       )}
 
       {/* Time signature */}
-      <div className="mb-5 flex items-center justify-center gap-2 text-sm text-stone-400">
-        <span className="uppercase tracking-wider text-xs">Compás</span>
+      <div className="mb-4 flex items-center justify-center gap-2 text-sm text-stone-400">
+        <span className="uppercase tracking-wider text-xs text-stone-600">Compás</span>
         {[3, 4, 6].map(n => (
           <button key={n} onClick={() => setBeatsPerBar(n)}
-            className={`rounded px-2.5 py-1 font-mono transition text-sm ${
-              beatsPerBar === n ? "bg-ember text-ink" : "bg-smoke text-stone-400 hover:text-bone"
+            className={`rounded-lg px-3 py-1.5 font-mono transition text-sm ${
+              beatsPerBar === n ? "bg-ember text-ink" : "bg-smoke text-stone-400 hover:text-bone active:bg-smoke/80"
             }`}>
             {n}/4
           </button>
         ))}
       </div>
 
-      {/* ── Sound type ───────────────────────────────────────────── */}
+      {/* Sound type */}
       <div className="mb-4">
         <p className="mb-2 text-xs uppercase tracking-wider text-stone-500">Sonido</p>
         <div className="grid grid-cols-3 gap-1.5">
           {(Object.keys(SOUND_META) as SoundType[]).map(s => (
             <button key={s} onClick={() => setSoundType(s)}
-              className={`rounded-lg border py-2 text-center transition ${
+              className={`rounded-lg border py-2.5 text-center transition sm:py-2 ${
                 soundType === s
                   ? "border-ember/50 bg-ember/10 text-ember"
-                  : "border-smoke bg-ink/30 text-stone-400 hover:text-bone"
+                  : "border-smoke bg-ink/30 text-stone-400 hover:text-bone active:bg-smoke/50"
               }`}>
               <p className="text-xs font-display font-bold">{SOUND_META[s].label}</p>
               <p className="text-[10px] text-stone-600 mt-0.5">{SOUND_META[s].desc}</p>
@@ -219,24 +220,25 @@ export default function Metronome({ initialBpm, bpmStart, bpmTarget }: Metronome
         </div>
       </div>
 
-      {/* ── Volume ───────────────────────────────────────────────── */}
-      <div className="mb-5">
+      {/* Volume */}
+      <div className="mb-4">
         <div className="mb-1.5 flex items-center justify-between">
           <p className="text-xs uppercase tracking-wider text-stone-500">Volumen</p>
           <span className="font-mono text-xs text-stone-400">{Math.round(volume * 100)}%</span>
         </div>
         <input type="range" min={0} max={1} step={0.05} value={volume}
           onChange={e => setVolume(Number(e.target.value))}
-          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-smoke accent-ember"
+          className="h-2 w-full cursor-pointer appearance-none rounded-full bg-smoke accent-ember"
+          style={{ touchAction: "pan-y" }}
         />
       </div>
 
-      {/* Play/Stop */}
+      {/* Play/Stop — tall touch target */}
       <button onClick={toggle}
-        className={`w-full rounded-xl py-4 font-display text-lg font-bold uppercase tracking-wider transition ${
-          playing ? "bg-rust text-bone hover:bg-rust/80" : "bg-ember text-ink hover:bg-amber"
+        className={`w-full rounded-xl py-4 font-display text-base font-bold uppercase tracking-wider transition sm:text-lg ${
+          playing ? "bg-rust text-bone active:bg-rust/80 hover:bg-rust/80" : "bg-ember text-ink active:bg-amber hover:bg-amber"
         }`}>
-        {playing ? "Detener" : "Iniciar"}
+        {playing ? "◼ Detener" : "▶ Iniciar"}
       </button>
     </div>
   );

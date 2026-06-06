@@ -85,13 +85,13 @@ export default function PracticeClient({
   return (
     <div>
       {/* Cabecera con racha */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="font-display text-sm uppercase tracking-[0.25em] text-ember">
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-xs uppercase tracking-[0.25em] text-ember sm:text-sm">
             {isDaily ? "Ejercicio del día" : "Lick al azar"}
           </p>
           <div className="mt-1 flex items-start gap-2">
-            <h1 className="font-display text-4xl font-extrabold tracking-tight text-bone sm:text-5xl">
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-bone sm:text-5xl min-w-0 break-words">
               {current.title}
             </h1>
             <FavoriteButton
@@ -101,14 +101,14 @@ export default function PracticeClient({
             />
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-amber/30 bg-amber/5 px-4 py-2.5">
-          <span className="text-2xl">🔥</span>
+        <div className="shrink-0 flex items-center gap-2 rounded-xl border border-amber/30 bg-amber/5 px-3 py-2 sm:px-4 sm:py-2.5">
+          <span className="text-xl sm:text-2xl">🔥</span>
           <div>
-            <div className="font-display text-2xl font-bold leading-none text-amber">
+            <div className="font-display text-xl font-bold leading-none text-amber sm:text-2xl">
               {localStreak}
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-stone-500">
-              días de racha
+            <div className="text-[9px] uppercase tracking-wider text-stone-500 sm:text-[10px]">
+              días racha
             </div>
           </div>
         </div>
@@ -156,28 +156,28 @@ export default function PracticeClient({
           </div>
 
           {/* Acciones */}
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
             <button
               onClick={shuffle}
-              className="flex items-center gap-2 rounded-xl border border-smoke bg-ash/60 px-5 py-3 font-medium text-bone transition hover:border-ember hover:text-ember"
+              className="col-span-1 flex items-center justify-center gap-2 rounded-xl border border-smoke bg-ash/60 px-4 py-3 text-sm font-medium text-bone transition hover:border-ember hover:text-ember active:bg-ash sm:px-5"
             >
-              🎲 Otro lick al azar
+              🎲 Al azar
             </button>
             {!isDaily && (
               <button
                 onClick={backToDaily}
-                className="rounded-xl border border-smoke bg-ash/60 px-5 py-3 font-medium text-stone-400 transition hover:text-bone"
+                className="col-span-1 rounded-xl border border-smoke bg-ash/60 px-4 py-3 text-sm font-medium text-stone-400 transition hover:text-bone active:bg-ash sm:px-5"
               >
-                ← Volver al del día
+                ← Del día
               </button>
             )}
             <button
               onClick={markComplete}
               disabled={done || saving}
-              className={`flex items-center gap-2 rounded-xl px-5 py-3 font-display font-bold uppercase tracking-wider transition ${
+              className={`col-span-2 flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-display text-sm font-bold uppercase tracking-wider transition sm:col-span-1 sm:px-5 ${
                 done
                   ? "cursor-default border border-sage/40 bg-sage/10 text-sage"
-                  : "bg-ember text-ink hover:bg-amber disabled:opacity-50"
+                  : "bg-ember text-ink hover:bg-amber active:bg-amber disabled:opacity-50"
               }`}
             >
               {done ? "✓ Practicado hoy" : saving ? "Guardando…" : "Marcar practicado"}
