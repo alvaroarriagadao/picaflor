@@ -20,7 +20,7 @@ export default async function PreciosLayout({
   return (
     <div className="min-h-screen bg-ink">
       <Nav isAdmin={isAdmin} isPro={plan === "pro"} />
-      <main className="mx-auto max-w-4xl px-5 py-10">{children}</main>
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-5 sm:py-10 content-with-bottom-nav">{children}</main>
     </div>
   );
 }

@@ -96,11 +96,11 @@ export default function LibraryClient({
         </div>
 
         {/* ── Filters ─────────────────────────────────────────────── */}
-        <div className="mb-8 flex flex-wrap items-center gap-3">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           <select
             value={tech}
             onChange={(e) => setTech(e.target.value as Technique | "all")}
-            className="rounded-lg border border-smoke bg-ash/60 px-3 py-2 text-sm text-bone outline-none transition focus:border-ember"
+            className="min-w-0 flex-1 rounded-xl border border-smoke bg-ash/60 px-3 py-2.5 text-sm text-bone outline-none transition focus:border-ember sm:flex-none"
           >
             <option value="all">Todas las técnicas</option>
             {techniques.map((t) => (
@@ -111,7 +111,7 @@ export default function LibraryClient({
           <select
             value={diff}
             onChange={(e) => setDiff(e.target.value as Difficulty | "all")}
-            className="rounded-lg border border-smoke bg-ash/60 px-3 py-2 text-sm text-bone outline-none transition focus:border-ember"
+            className="min-w-0 flex-1 rounded-xl border border-smoke bg-ash/60 px-3 py-2.5 text-sm text-bone outline-none transition focus:border-ember sm:flex-none"
           >
             <option value="all">Cualquier nivel</option>
             {DIFFICULTY_ORDER.map((d) => (
@@ -121,14 +121,14 @@ export default function LibraryClient({
 
           <button
             onClick={() => setOnlyFavorites((f) => !f)}
-            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition ${
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm transition active:bg-smoke/50 ${
               onlyFavorites
                 ? "border-amber/40 bg-amber/10 text-amber"
                 : "border-smoke bg-ash/60 text-stone-400 hover:text-amber"
             }`}
           >
             {onlyFavorites ? "★" : "☆"}
-            <span>Favoritos</span>
+            <span className="hidden xs:inline sm:inline">Favoritos</span>
             {favorites.size > 0 && (
               <span className="rounded-full bg-amber/20 px-1.5 text-xs text-amber">
                 {favorites.size}
@@ -143,9 +143,9 @@ export default function LibraryClient({
                 setDiff("all");
                 setOnlyFavorites(false);
               }}
-              className="text-xs text-stone-600 hover:text-stone-400 transition"
+              className="rounded-xl border border-smoke/40 px-3 py-2.5 text-xs text-stone-600 transition hover:text-stone-400 active:bg-smoke/30"
             >
-              Limpiar filtros ×
+              Limpiar ×
             </button>
           )}
         </div>

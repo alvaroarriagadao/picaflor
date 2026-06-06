@@ -11,6 +11,9 @@ body {
   background-color: #0c0a09;
   color: #f5f1e8;
   -webkit-font-smoothing: antialiased;
+  /* Prevent horizontal overflow on mobile */
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Textura sutil de grano sobre el fondo oscuro */
@@ -24,19 +27,21 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Scrollbar acorde a la estética */
-::-webkit-scrollbar {
-  width: 10px;
-}
-::-webkit-scrollbar-track {
-  background: #1c1917;
-}
-::-webkit-scrollbar-thumb {
-  background: #44403c;
-  border-radius: 5px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #e8632c;
+/* Scrollbar acorde a la estética — solo desktop */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1c1917;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #44403c;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #e8632c;
+  }
 }
 
 /* La tablatura debe respetar el monoespaciado exacto */
@@ -45,4 +50,31 @@ body::before {
   white-space: pre;
   letter-spacing: 0;
   line-height: 1.5;
+  /* Prevent tab block from breaking parent layout */
+  display: block;
+  min-width: 0;
+}
+
+/* Safe-area bottom padding for iOS notch */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Main content area clears the mobile bottom nav */
+.content-with-bottom-nav {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 640px) {
+  .content-with-bottom-nav {
+    padding-bottom: 2rem;
+  }
+}
+
+/* Touch-friendly tap targets */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
